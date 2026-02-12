@@ -17,6 +17,7 @@ jobs:
         with:
           name: announcement-state
           path: canvas_integration/
+          merge-multiple: true
         continue-on-error: true # Important: the first run won't have an artifact
     
       - name: Set up Python
@@ -38,4 +39,6 @@ jobs:
         with:
           name: announcement-state
           path: canvas_integration/latest_announcement_id.txt
-          retention-days: 30 # We only need the most recent one
+          retention-days: 1 # We only need the most recent one
+          overwrite: true
+          

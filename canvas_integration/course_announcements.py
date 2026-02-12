@@ -9,9 +9,14 @@ DISCORD_WEBHOOK = os.getenv("NEWS_WEBHOOK")
 COURSE_ID = "1496658" # Replace with your actual course ID
 CANVAS_DOMAIN = "webcourses.ucf.edu" # Change if your school uses a custom domain
 
-latest_post_file = "latest_announcement_id.txt"
+# This finds the directory this script is in and looks for the file there.
+base_dir = os.path.dirname(os.path.abspath(__file__))
+latest_post_file = os.path.join(base_dir, "latest_announcement_id.txt")
+
 def artifact_output(file_name):
     id = ""
+    if not os.path.isfile(file_name):
+        return id
     with open(file_name) as file:
         id = file.read().strip()
     return id
@@ -20,6 +25,7 @@ def publish_artifact(file_name, id):
     with open(file_name, "w") as file:
         file.write(str(id))
     return 
+
 def poll():
     token = CANVAS_TOKEN.strip() if CANVAS_TOKEN else ""
 
