@@ -6,7 +6,7 @@ import json
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
 DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 COURSE_ID = "1496658" # Replace with your actual course ID
-CANVAS_DOMAIN = "https://webcourses.ucf.edu/" # Change if your school uses a custom domain
+CANVAS_DOMAIN = "webcourses.ucf.edu" # Change if your school uses a custom domain
 
 latest_post_file = ""
 def artifact_output(file_name):
