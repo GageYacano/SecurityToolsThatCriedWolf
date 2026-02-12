@@ -9,7 +9,7 @@ COURSE_ID = "1496658"
 CANVAS_DOMAIN = "webcourses.ucf.edu"
 
 # Set a real filename for the state tracking
-LATEST_POST_FILE = "latest_announcement_id.txt"
+LATEST_POST_FILE = "latest_id.txt"
 
 def artifact_output(file_name):
     if not os.path.exists(file_name):
