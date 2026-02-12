@@ -7,7 +7,10 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
-    steps:
+    steps:   
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
     # 1. Try to download the last saved ID from the previous run
       - name: Download last ID
         uses: actions/download-artifact@v4
@@ -15,10 +18,7 @@ jobs:
           name: announcement-state
           path: canvas_integration/
         continue-on-error: true # Important: the first run won't have an artifact
-        
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
+    
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
