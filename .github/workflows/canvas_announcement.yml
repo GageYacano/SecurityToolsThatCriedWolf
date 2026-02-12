@@ -22,5 +22,5 @@ jobs:
       - name: Run Poller
         env:
           CANVAS_TOKEN: ${{ secrets.CANVAS_TOKEN }}
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          NEWS_WEBHOOK: ${{ secrets.NEWS_WEBHOOK }}
         run: cd canvas_integration && python course_announcements.py
