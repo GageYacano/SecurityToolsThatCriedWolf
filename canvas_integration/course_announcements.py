@@ -4,7 +4,7 @@ import json
 
 # Configuration from Secrets
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN", "").strip() # .strip() is crucial here
-DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK", "").strip()
+DISCORD_WEBHOOK = os.getenv("NEWS_WEBHOOK", "").strip()
 COURSE_ID = "1496658" 
 CANVAS_DOMAIN = "webcourses.ucf.edu"
 
