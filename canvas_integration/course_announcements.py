@@ -21,12 +21,14 @@ def publish_artifact(file_name, id):
         file.write(str(id))
     return 
 def poll():
+    token = CANVAS_TOKEN.strip() if CANVAS_TOKEN else ""
+
     # check for canvas or discord token
-    if not CANVAS_TOKEN or not DISCORD_WEBHOOK:
+    if not token or not DISCORD_WEBHOOK:
         print("didn't find environment variables. Quitting...")
         return
     
-    headers = {"Authorization": f"Bearer {CANVAS_TOKEN}"}
+    headers = {"Authorization": f"Bearer {token}"}
     url = f"https://{CANVAS_DOMAIN}/api/v1/announcements?context_codes[]=course_{COURSE_ID}"
     
     response = requests.get(url, headers=headers)
