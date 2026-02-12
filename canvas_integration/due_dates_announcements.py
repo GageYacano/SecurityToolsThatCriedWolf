@@ -57,12 +57,12 @@ def poll_due_dates():
         # Only alert if it's within our 48-hour window
         if now < due_date <= warning_window:
             title = assignment.get("name")
-            due_pretty = due_date.strftime("%A, %b %d at %I:%M %p UTC")
+            due_pretty = due_date.strftime("%A, %b %d at %I:%M %p ETC")
             link = assignment.get("html_url")
 
             payload = {
-                "content": "@everyone **WATCH OUT LOSERS: UPCOMING DUE DATE DETECTED**",
                 "embeds": [{
+                    "content": "@everyone **WATCH OUT LOSERS: UPCOMING DUE DATE DETECTED**",
                     "title": title,
                     "description": f"This is due in less than 72 hours!\n**Due:** {due_pretty}",
                     "color": 15158332, # Reddish for urgency
