@@ -1,90 +1,96 @@
 import requests
 import os
-import json
 from bs4 import BeautifulSoup
 
-# Configuration from Secrets
+# Configuration
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
 DISCORD_WEBHOOK = os.getenv("NEWS_WEBHOOK")
-COURSE_ID = "1496658" # Replace with your actual course ID
-CANVAS_DOMAIN = "webcourses.ucf.edu" # Change if your school uses a custom domain
+COURSE_ID = "1496658"
+CANVAS_DOMAIN = "webcourses.ucf.edu"
 
-# This finds the directory this script is in and looks for the file there.
-base_dir = os.path.dirname(os.path.abspath(__file__))
-latest_post_file = os.path.join(base_dir, "latest_announcement_id.txt")
+# GitHub API Configuration
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+REPO = os.getenv("GITHUB_REPOSITORY")
+VAR_NAME = "LAST_ANNOUNCEMENT_ID"
 
-def artifact_output(file_name):
-    id = ""
-    if not os.path.isfile(file_name):
-        return id
-    with open(file_name) as file:
-        id = file.read().strip()
-    return id
+def get_stored_id():
+    """Fetches the last ID from GitHub Repository Variables."""
+    url = f"https://api.github.com/repos/{REPO}/actions/variables/{VAR_NAME}"
+    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
     
-def publish_artifact(file_name, id):
-    with open(file_name, "w") as file:
-        file.write(str(id))
-    return 
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        return response.json().get("value", "")
+    print(f"Note: Could not fetch variable (Status: {response.status_code})")
+    return ""
+
+def update_stored_id(new_id):
+    """Updates the GitHub Repository Variable with the new ID."""
+    url = f"https://api.github.com/repos/{REPO}/actions/variables/{VAR_NAME}"
+    headers = {"Authorization": f"Bearer {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+    data = {"name": VAR_NAME, "value": str(new_id)}
+    
+    response = requests.patch(url, headers=headers, json=data)
+    if response.status_code == 204:
+        print(f"Successfully updated GitHub variable to {new_id}")
+    else:
+        print(f"Failed to update GitHub variable: {response.status_code} {response.text}")
 
 def poll():
     token = CANVAS_TOKEN.strip() if CANVAS_TOKEN else ""
-
-    # check for canvas or discord token
-    if not token or not DISCORD_WEBHOOK:
-        print("didn't find environment variables. Quitting...")
+    if not token or not DISCORD_WEBHOOK or not GITHUB_TOKEN:
+        print("Missing environment variables. Quitting...")
         return
     
+    # 1. Get latest from Canvas
     headers = {"Authorization": f"Bearer {token}"}
     url = f"https://{CANVAS_DOMAIN}/api/v1/announcements?context_codes[]=course_{COURSE_ID}"
     
-    response = requests.get(url, headers=headers)
-    announcements = response.json()
+    try:
+        response = requests.get(url, headers=headers)
+        announcements = response.json()
+    except Exception as e:
+        print(f"Canvas API Error: {e}")
+        return
 
     if not announcements:
         return
 
-    # In a simple setup, we just grab the latest one
     latest = announcements[0]
-    id = str(latest.get("id"))
+    current_id = str(latest.get("id"))
 
-    # look at artifact output
-    if os.path.isfile(latest_post_file):
-        if id == artifact_output(latest_post_file):
-            print("already sent! skipping...")
-            return
+    # 2. Check against GitHub Variable
+    stored_id = get_stored_id()
+    print(f"Canvas ID: {current_id} | Stored ID: {stored_id}")
+
+    if current_id == stored_id:
+        print("Already sent! skipping...")
+        return
     
+    # 3. Clean Message
     title = latest.get("title", "No Title")
-    raw_html = latest.get("message", "")
+    soup = BeautifulSoup(latest.get("message", ""), "html.parser")
+    for s in soup(["script", "style"]): s.decompose()
+    clean_message = soup.get_text(separator="\n").strip()
     
-    # Use BeautifulSoup to clean the mess
-    soup = BeautifulSoup(raw_html, "html.parser")
-
-    # Remove script and style elements so their code doesn't show up as text
-    for script_or_style in soup(["script", "style", "link"]):
-        script_or_style.decompose()
-
-    # Get text and handle whitespace
-    clean_message = soup.get_text(separator="\n")
-    
-    # Optional: Discord uses Markdown, so if you want to keep links clickable, 
-    # BeautifulSoup can be more complex, but get_text is the best "quick fix."    
-    
-    # Send to Discord
+    # 4. Post to Discord
     payload = {
         "embeds": [{
-            "title": f"Hey losers! I got an announcement: {title}",
-            "description": clean_message[:2000], # Discord limit
-            "color": 5814783,
+            "title": f"Hey Losers! Got an announcement: \n{title}",
+            "description": clean_message[:2000],
+            "color": 16753920, # UCF Gold
             "url": latest.get("html_url")
         }]
     }
+    
     resp = requests.post(DISCORD_WEBHOOK, json=payload)
     
     if resp.status_code in [200, 204]:
-        # Only update the "memory" file if Discord actually received it
-        publish_artifact(latest_post_file, id)
-        print(f"Successfully posted {id}")
+        # 5. Update Variable only on success
+        update_stored_id(current_id)
+        print(f"Posted {current_id}")
     else:
         print(f"Discord error: {resp.status_code}")
+
 if __name__ == "__main__":
     poll()

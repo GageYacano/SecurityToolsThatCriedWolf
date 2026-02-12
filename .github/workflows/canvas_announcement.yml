@@ -7,9 +7,13 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write # Needed to upload artifacts
     steps:   
       - name: Checkout code
         uses: actions/checkout@v4
+
         
     # 1. Try to download the last saved ID from the previous run
       - name: Download last ID
@@ -32,6 +36,8 @@ jobs:
         env:
           CANVAS_TOKEN: ${{ secrets.CANVAS_TOKEN }}
           NEWS_WEBHOOK: ${{ secrets.NEWS_WEBHOOK }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # automatically provided
+          
         run: cd canvas_integration && python course_announcements.py
 # 2. Upload the NEW ID so the next run can see it
       - name: Upload new ID
@@ -41,4 +47,4 @@ jobs:
           path: canvas_integration/latest_announcement_id.txt
           retention-days: 1 # We only need the most recent one
           overwrite: true
-          
+
