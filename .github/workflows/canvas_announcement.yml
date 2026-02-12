@@ -26,19 +26,23 @@ jobs:
         env:
           CANVAS_TOKEN: ${{ secrets.CANVAS_TOKEN }}
           NEWS_WEBHOOK: ${{ secrets.NEWS_WEBHOOK }}
+          DUE_DATE_WEBHOOK: ${{ secrets.DUE_DATE_WEBHOOK }}
         run: |
           cd canvas_integration
           python course_announcements.py
+          python due_dates_announcements.py
 
       - name: Save State (Commit & Push)
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add canvas_integration/latest_announcement_id.txt
+          git add canvas_integration/sent_due_dates.json
           # Only commit and push if the file actually changed
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: update latest announcement id [skip ci]"
+            git commit -m "chore: update latest announcement id or due date ids [skip ci]"
+            git pull --rebase origin main
             git push
           fi
