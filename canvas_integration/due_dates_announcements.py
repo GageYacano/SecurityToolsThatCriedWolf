@@ -2,6 +2,7 @@ import requests
 import os
 import json
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 # Configuration
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
@@ -9,6 +10,7 @@ DISCORD_WEBHOOK = os.getenv("DUE_DATE_WEBHOOK")
 COURSE_ID = "1496658"
 CANVAS_DOMAIN = "webcourses.ucf.edu"
 DUE_TIME = 72
+
 # State file to remember sent alerts
 script_dir = os.path.dirname(os.path.abspath(__file__))
 state_file = os.path.join(script_dir, "sent_due_dates.json")
@@ -49,7 +51,7 @@ def poll_due_dates():
             continue
 
         # Parse Canvas time (UTC)
-        due_date = datetime.strptime(due_at_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        due_date = datetime.strptime(due_at_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc.astimezone(ZoneInfo("America/New_York")))
 
         # Only alert if it's within our 48-hour window
         if now < due_date <= warning_window:
@@ -58,7 +60,7 @@ def poll_due_dates():
             link = assignment.get("html_url")
 
             payload = {
-                "content": "**WATCH OUT LOSERS: UPCOMING DUE DATE DETECTED**",
+                "content": "@everyone **WATCH OUT LOSERS: UPCOMING DUE DATE DETECTED**",
                 "embeds": [{
                     "title": title,
                     "description": f"This is due in less than 72 hours!\n**Due:** {due_pretty}",
