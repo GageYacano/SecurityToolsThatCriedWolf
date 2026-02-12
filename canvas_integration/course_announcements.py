@@ -53,7 +53,8 @@ def poll():
     
     payload = {
         "embeds": [{
-            "title": f"@everyone Hey Losers! Got an announcement: \n{title}",
+            "content": "@everyone **HEY LOSERS, NEW ANNOUNCEMENT DETECTED**",
+            "title": f"Hey Losers! Got an announcement: \n{title}",
             "description": clean_message[:2000],
             "color": 16753920,
             "url": latest.get("html_url")

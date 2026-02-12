@@ -50,8 +50,9 @@ def poll_due_dates():
         if not due_at_str or assign_id in sent_ids:
             continue
 
-        # Parse Canvas time (UTC)
-        due_date = datetime.strptime(due_at_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc.astimezone(ZoneInfo("America/New_York")))
+        # 2. Convert that UTC time to EST/EDT
+        est_zone = ZoneInfo("America/New_York")
+        due_date = datetime.strptime(due_at_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc).astimezone(est_zone)
 
         # Only alert if it's within our 48-hour window
         if now < due_date <= warning_window:
