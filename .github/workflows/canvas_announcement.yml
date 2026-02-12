@@ -23,4 +23,4 @@ jobs:
         env:
           CANVAS_TOKEN: ${{ secrets.CANVAS_TOKEN }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python poll_canvas.py
+        run: python course_announcements.py
