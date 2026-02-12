@@ -24,3 +24,10 @@ jobs:
           CANVAS_TOKEN: ${{ secrets.CANVAS_TOKEN }}
           NEWS_WEBHOOK: ${{ secrets.NEWS_WEBHOOK }}
         run: cd canvas_integration && python course_announcements.py
+# 2. Upload the NEW ID so the next run can see it
+      - name: Upload new ID
+        uses: actions/upload-artifact@v4
+        with:
+          name: announcement-state
+          path: canvas_integration/latest_id.txt
+          retention-days: 30 # We only need the most recent one
