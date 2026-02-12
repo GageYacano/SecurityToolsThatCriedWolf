@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 # Configuration from Secrets
 CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
-DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK")
+DISCORD_WEBHOOK = os.getenv("NEWS_WEBHOOK")
 COURSE_ID = "1496658" # Replace with your actual course ID
 CANVAS_DOMAIN = "webcourses.ucf.edu" # Change if your school uses a custom domain
 
