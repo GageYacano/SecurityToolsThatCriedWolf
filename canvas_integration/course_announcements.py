@@ -1,76 +1,82 @@
 import requests
 import os
 import json
+from bs4 import BeautifulSoup
 
 # Configuration from Secrets
-CANVAS_TOKEN = os.getenv("CANVAS_TOKEN", "").strip() # .strip() is crucial here
-DISCORD_WEBHOOK = os.getenv("NEWS_WEBHOOK", "").strip()
-COURSE_ID = "1496658" 
-CANVAS_DOMAIN = "webcourses.ucf.edu"
+CANVAS_TOKEN = os.getenv("CANVAS_TOKEN")
+DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK")
+COURSE_ID = "1496658" # Replace with your actual course ID
+CANVAS_DOMAIN = "webcourses.ucf.edu" # Change if your school uses a custom domain
 
-# Set a real filename for the state tracking
-LATEST_POST_FILE = "latest_id.txt"
-
+latest_post_file = "latest_announcement_id.txt"
 def artifact_output(file_name):
-    if not os.path.exists(file_name):
-        return ""
-    with open(file_name, "r") as file:
-        return file.read().strip()
+    id = ""
+    with open(file_name) as file:
+        id = file.read().strip()
+    return id
     
-def publish_artifact(file_name, id_value):
+def publish_artifact(file_name, id):
     with open(file_name, "w") as file:
-        file.write(str(id_value))
-
+        file.write(str(id))
+    return 
 def poll():
-    if not CANVAS_TOKEN:
-        print("Error: CANVAS_TOKEN is missing!")
+    # check for canvas or discord token
+    if not CANVAS_TOKEN or not DISCORD_WEBHOOK:
+        print("didn't find environment variables. Quitting...")
         return
-
+    
     headers = {"Authorization": f"Bearer {CANVAS_TOKEN}"}
     url = f"https://{CANVAS_DOMAIN}/api/v1/announcements?context_codes[]=course_{COURSE_ID}"
     
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status() # Check for HTTP errors
-        announcements = response.json()
-    except Exception as e:
-        print(f"Failed to fetch announcements: {e}")
+    response = requests.get(url, headers=headers)
+    announcements = response.json()
+
+    if not announcements:
         return
 
-    if not announcements or not isinstance(announcements, list):
-        print("No announcements found or unexpected API response.")
-        return
-
-    # Canvas returns the newest first
+    # In a simple setup, we just grab the latest one
     latest = announcements[0]
-    current_id = str(latest.get("id"))
+    id = str(latest.get("id"))
 
-    # Compare with last known ID
-    last_id = artifact_output(LATEST_POST_FILE)
-    if current_id == last_id:
-        print("No new announcements.")
-        return
-
-    # Update the tracker file
-    publish_artifact(LATEST_POST_FILE, current_id)
+    # look at artifact output
+    if os.path.isfile(latest_post_file):
+        if id == artifact_output(latest_post_file):
+            print("already sent! skipping...")
+            return
     
     title = latest.get("title", "No Title")
-    # Basic HTML cleanup (Canvas messages are HTML)
-    message = latest.get("message", "").replace("<p>", "").replace("</p>", "\n")
+    raw_html = latest.get("message", "")
+    
+    # Use BeautifulSoup to clean the mess
+    soup = BeautifulSoup(raw_html, "html.parser")
+
+    # Remove script and style elements so their code doesn't show up as text
+    for script_or_style in soup(["script", "style", "link"]):
+        script_or_style.decompose()
+
+    # Get text and handle whitespace
+    clean_message = soup.get_text(separator="\n")
+    
+    # Optional: Discord uses Markdown, so if you want to keep links clickable, 
+    # BeautifulSoup can be more complex, but get_text is the best "quick fix."    
     
     # Send to Discord
     payload = {
         "embeds": [{
-            "title": f"New Announcement: {title}",
-            "description": message[:2000],
+            "title": f"Hey losers! I got an announcement: {title}",
+            "description": clean_message[:2000], # Discord limit
             "color": 5814783,
-            "url": latest.get("html_url") # Adds a link to the actual post
+            "url": latest.get("html_url")
         }]
     }
+    resp = requests.post(DISCORD_WEBHOOK, json=payload)
     
-    if DISCORD_WEBHOOK:
-        requests.post(DISCORD_WEBHOOK, json=payload)
-        print(f"Posted announcement {current_id} to Discord.")
-
+    if resp.status_code in [200, 204]:
+        # Only update the "memory" file if Discord actually received it
+        publish_artifact(latest_post_file, id)
+        print(f"Successfully posted {id}")
+    else:
+        print(f"Discord error: {resp.status_code}")
 if __name__ == "__main__":
     poll()

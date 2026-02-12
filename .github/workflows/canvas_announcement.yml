@@ -25,7 +25,7 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests beautifulsoup4
 
       - name: Run Poller
         env:
@@ -37,5 +37,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: announcement-state
-          path: canvas_integration/latest_id.txt
+          path: canvas_integration/latest_announcement_id.txt
           retention-days: 30 # We only need the most recent one
