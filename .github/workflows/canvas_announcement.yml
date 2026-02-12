@@ -1,29 +1,19 @@
 name: Canvas Announcement Poller
 on:
   schedule:
-    - cron: '0 * * * *' # Runs every hour
-  workflow_dispatch:    # Allows you to run it manually for testing
+    - cron: '0 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      actions: write # Needed to upload artifacts
+      contents: write # Essential for the push step
+    
     steps:   
       - name: Checkout code
         uses: actions/checkout@v4
-
         
-    # 1. Try to download the last saved ID from the previous run
-      - name: Download last ID
-        uses: actions/download-artifact@v4
-        with:
-          name: announcement-state
-          path: canvas_integration/
-          merge-multiple: true
-        continue-on-error: true # Important: the first run won't have an artifact
-    
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -36,15 +26,19 @@ jobs:
         env:
           CANVAS_TOKEN: ${{ secrets.CANVAS_TOKEN }}
           NEWS_WEBHOOK: ${{ secrets.NEWS_WEBHOOK }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # automatically provided
-          
-        run: cd canvas_integration && python course_announcements.py
-# 2. Upload the NEW ID so the next run can see it
-      - name: Upload new ID
-        uses: actions/upload-artifact@v4
-        with:
-          name: announcement-state
-          path: canvas_integration/latest_announcement_id.txt
-          retention-days: 1 # We only need the most recent one
-          overwrite: true
+        run: |
+          cd canvas_integration
+          python course_announcements.py
 
+      - name: Save State (Commit & Push)
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add canvas_integration/latest_announcement_id.txt
+          # Only commit and push if the file actually changed
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update latest announcement id [skip ci]"
+            git push
+          fi
