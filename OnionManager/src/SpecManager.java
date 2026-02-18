@@ -11,8 +11,8 @@ public class SpecManager {
 	private String[] layerData;
 	
 	LayerRequirements HardWare = new HWSpec();
-	LayerRequirements FirmWare = new FWSpec();
-	LayerRequirements OS = new OSSpec();
+	LayerRequirements FirmWare = new OSSpec();
+	LayerRequirements OS = new FWSpec();
 	LayerRequirements Library = new Libs();
 	LayerRequirements Applications = new Apps();
 	

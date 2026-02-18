@@ -1,0 +1,39 @@
+{
+{
+  "Hardware > Hardware Overview": [
+    {"key":"System Firmware Version","value":"13822.61.10"},
+    {"key":"System Firmware Version","value":"13822.61.10"}
+  ],
+  "Bluetooth > Bluetooth Controller": [
+    {"key":"Firmware Version","value":"23.3.214.1291"}
+  ],
+  "Bluetooth > Connected > Armin—2082970114": [
+    {"key":"Firmware Version","value":"8B28"}
+  ],
+  "Bluetooth > Not Connected > AirPods Pro - Find My": [
+    {"key":"Firmware Version","value":"7A294"}
+  ],
+  "Bluetooth > Not Connected > Armin’s AirPods": [
+    {"key":"Firmware Version","value":"5B58"}
+  ],
+  "Bluetooth > Not Connected > Armin’s AirPods Pro": [
+    {"key":"Firmware Version","value":"6A300"}
+  ],
+  "Power > Battery Information > Model Information": [
+    {"key":"Firmware Version","value":"0b00"},
+    {"key":"Firmware Version","value":"0b00"}
+  ],
+  "Power > AC Charger Information": [
+    {"key":"Firmware Version","value":"1090058"},
+    {"key":"Firmware Version","value":"1090058"}
+  ],
+  "Thunderbolt/USB4 > Thunderbolt/USB4 Bus 2 > Port": [
+    {"key":"Micro Firmware Version","value":"0.0.0"}
+  ],
+  "Thunderbolt/USB4 > Thunderbolt/USB4 Bus 2 > Port > 246x": [
+    {"key":"Firmware Version","value":"44.17"}
+  ],
+  "Thunderbolt/USB4 > Thunderbolt/USB4 Bus 2 > Port > 246x > Port (Upstream)": [
+    {"key":"Micro Firmware Version","value":"0.0.0"}
+  ]
+}
