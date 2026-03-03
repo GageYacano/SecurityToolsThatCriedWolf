@@ -1,0 +1,29 @@
+[ {
+  "component" : "controller_properties",
+  "key" : "controller_firmwareVersion",
+  "version" : "23.3.214.1291"
+}, {
+  "component" : "Headphones",
+  "key" : "device_firmwareVersion",
+  "version" : "7A294"
+}, {
+  "component" : "Headphones",
+  "key" : "device_firmwareVersion",
+  "version" : "8B28"
+}, {
+  "component" : "Headphones",
+  "key" : "device_firmwareVersion",
+  "version" : "5B58"
+}, {
+  "component" : "Headphones",
+  "key" : "device_firmwareVersion",
+  "version" : "6A300"
+}, {
+  "component" : "MacBook Pro",
+  "key" : "os_loader_version",
+  "version" : "13822.81.10"
+}, {
+  "component" : "bq40z651",
+  "key" : "sppower_battery_firmware_version",
+  "version" : "0b00"
+} ]

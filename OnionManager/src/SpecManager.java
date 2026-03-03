@@ -10,7 +10,7 @@ public class SpecManager {
 	
 	private String[] layerData;
 	
-	LayerRequirements HardWare = new HWSpec();
+	//LayerRequirements HardWare = new HWSpec();
 	LayerRequirements FirmWare = new OSSpec();
 	LayerRequirements OS = new FWSpec();
 	LayerRequirements Library = new Libs();
