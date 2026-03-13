@@ -1,3 +1,4 @@
+package com.seniordesign;
 
 public class SpecManager {
 	private enum Layer{

@@ -1,3 +1,4 @@
+package com.seniordesign;
 
 public interface LayerRequirements {
 	void loadData();

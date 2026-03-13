@@ -1,6 +1,7 @@
+package com.seniordesign;
 
 
-public class HWSpec implements LayerRequirements{
+public class OSSpec implements LayerRequirements{
 	
 	// Stores the json info, will not be destroyed and will be used to check
 	// For any new changes each time load data is called
