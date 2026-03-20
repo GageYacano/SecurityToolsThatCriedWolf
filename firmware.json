@@ -1,23 +1,23 @@
 [ {
   "component" : "controller_properties",
   "key" : "controller_firmwareVersion",
-  "version" : "MAC FW Version: 1.515.221.0, PHY FW Version: 2.1.507.102"
+  "version" : "23.1.623.4111"
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
-  "version" : "7A294"
+  "version" : "1.0.0"
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
-  "version" : "8B28"
+  "version" : "0.0.1"
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
-  "version" : "5B58"
+  "version" : "6F21"
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
-  "version" : "6A300"
+  "version" : "7.8.8"
 }, {
   "component" : "MacBook Pro",
   "key" : "os_loader_version",
@@ -27,7 +27,11 @@
   "key" : "sppower_battery_firmware_version",
   "version" : "0b00"
 }, {
-  "component" : "140W USB-C Power Adapter",
-  "key" : "sppower_ac_charger_firmware_version",
-  "version" : "01040084"
+  "component" : "HP OfficeJet 3830 series",
+  "key" : "printerfirmwareversion",
+  "version" : "SPP5FN2223AR:SPP5FN2223AR"
+}, {
+  "component" : "HP OfficeJet 3830 series - Fax",
+  "key" : "printerfirmwareversion",
+  "version" : "SPP5FN2223AR:SPP5FN2223AR"
 } ]

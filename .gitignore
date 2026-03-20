@@ -1,2 +1,6 @@
 /.metadata/
 .vscode
+**/target/
+*.iml
+.idea
+/out/
