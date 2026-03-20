@@ -1,43 +1,40 @@
 package com.seniordesign;
 
-import java.io.BufferedReader;
-
-import java.io.InputStreamReader;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import oshi.SystemInfo;
+import oshi.hardware.CentralProcessor;
+import oshi.hardware.ComputerSystem;
+import oshi.hardware.GraphicsCard;
+import oshi.hardware.HardwareAbstractionLayer;
 
 public class HWSpec implements LayerRequirements{
 	
 	// Stores the json info, will not be destroyed and will be used to check
 	// For any new changes each time load data is called
 	private String data = "";
+	private String currentData = "";
 	
 	// Gets all the data you will be needing. This is basically your main
 	public void loadData() {
-		String myData = "";
-		// Get data, blah blah blah
+		// Get all hardware data (CPU, memory, GPU, motherboard, storage, etc)
 		ObjectNode hwJson = getHardwareJson();
-		ObjectNode gpuJson = getGPUJson();
 
-		data = getCombinedJson(hwJson, gpuJson);
-//		System.out.println(data);
+		currentData= getCombinedJson(hwJson);
+
+		if(!checkDuplicate()){
+			data = currentData;
+		}
 
 		debugJson(data);
-//
-//		if(checkDuplicate()){
-//			data = myData;
-//		}
 	}
-	
+
+	// returns true if the data is the same as the current data and is not empty, otherwise returns false
 	public boolean checkDuplicate() {
-		// if data == "" 			--> return true
-		// if data != loadData.info --> return true
-		// if data == loadData.info --> return false
-		return false;
-	}
+		return data.equals(currentData) &&  !data.isEmpty();
+    }
 
 	// Does checks and then returns info
 	public String toQuery() {
@@ -47,26 +44,14 @@ public class HWSpec implements LayerRequirements{
 
 	/* --------  Hardware info fetching functions -------- */
 
-	// Combines JSON from all functions into one JSON object and returns it as a string
-	public String getCombinedJson(ObjectNode hwJson, ObjectNode gpuJson){
+	// Combines all hardware JSON into single object and returns it as a string
+	public String getCombinedJson(ObjectNode hwJson){
 		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode hardwareJson = mapper.createObjectNode();
-
-		// Parse HW JSON
-		hardwareJson.set("model", hwJson.path("model"));
-		hardwareJson.set("name", hwJson.path("name"));
-		hardwareJson.set("modelNumber", hwJson.path("modelNumber"));
-		hardwareJson.set("serialNumber", hwJson.path("serialNumber"));
-		hardwareJson.set("cpu", hwJson.path("cpu"));
-		hardwareJson.set("memory", hwJson.path("memory"));
-
-		// Parse GPU JSON
-		hardwareJson.set("gpu", gpuJson.path("gpu"));
-		hardwareJson.set("display", gpuJson.path("display"));
-
-		// Created combined JSON object
 		ObjectNode combinedJson = mapper.createObjectNode();
-		combinedJson.set("hardware", hardwareJson);
+
+		// Wrap all hardware data under top-level hardware object
+		combinedJson.set("hardware", hwJson);
+
 		return combinedJson.toString();
 
 	}
@@ -84,55 +69,20 @@ public class HWSpec implements LayerRequirements{
 		}
 	}
 
-	// Gets CPU, memory, etc
+	// Gets CPU, memory, GPU, etc using OSHI library (cross-platform)
 	private ObjectNode getHardwareJson(){
 
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode hwJson = mapper.createObjectNode();
 
 		try{
-			// Create process
-			ProcessBuilder processBuilder = new ProcessBuilder("system_profiler", "SPHardwareDataType", "-json");
-			processBuilder.redirectErrorStream(true);
-
-			// Start process
-			Process process = processBuilder.start();
-
-			// Read output of system_profiler command
-			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			StringBuilder output = new StringBuilder();
-			String line;
-			while ((line = reader.readLine()) != null){
-				output.append(line).append("\n");
-			}
-
-			// Wait for process to finish
-			int exitCode = process.waitFor();
-			if(exitCode != 0){
-				System.err.println("Error: system_profiler command failed.");
-				return hwJson;
-			}
-
-			JsonNode root = mapper.readTree(output.toString());
-			JsonNode hardwareData = root.path("SPHardwareDataType");
-			if (!hardwareData.isArray() || hardwareData.isEmpty()) {
-				return hwJson;
-			}
-
-			JsonNode hw = hardwareData.get(0);
-			hwJson.put("model", hw.path("machine_model").asText(""));
-			hwJson.put("name", hw.path("machine_name").asText(""));
-			hwJson.put("modelNumber", hw.path("model_number").asText(""));
-			hwJson.put("serialNumber", hw.path("serial_number").asText(""));
-
-			ObjectNode cpuJson = mapper.createObjectNode();
-			cpuJson.put("chipset", hw.path("chip_type").asText(""));
-			cpuJson.put("numberProcessors", hw.path("number_processors").asText(""));
-			hwJson.set("cpu", cpuJson);
-
-			ObjectNode memoryJson = mapper.createObjectNode();
-			memoryJson.put("capacity", hw.path("physical_memory").asText(""));
-			hwJson.set("memory", memoryJson);
+			// Get all hardware components and combine into one object
+			hwJson.setAll(getSystemInfo());
+			hwJson.setAll(getMotherboardInfo());
+			hwJson.setAll(getCPUInfo());
+			hwJson.setAll(getMemoryInfo());
+			hwJson.setAll(getPCIDevices());
+			hwJson.setAll(getGPUJson());
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -140,68 +90,214 @@ public class HWSpec implements LayerRequirements{
 		return hwJson;
 	}
 
-	// Gets GPU and display info
+	// Gets basic system information (model, name, serial)
+	private ObjectNode getSystemInfo() {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode systemJson = mapper.createObjectNode();
+
+		try {
+			SystemInfo systemInfo = new SystemInfo();
+			HardwareAbstractionLayer hal = systemInfo.getHardware();
+			ComputerSystem computerSystem = hal.getComputerSystem();
+
+			systemJson.put("model", computerSystem.getModel());
+			systemJson.put("name", computerSystem.getManufacturer());
+			systemJson.put("serialNumber", computerSystem.getSerialNumber());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return systemJson;
+	}
+
+	// Gets motherboard information
+	private ObjectNode getMotherboardInfo() {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode motherboardJson = mapper.createObjectNode();
+
+		try {
+			SystemInfo systemInfo = new SystemInfo();
+			HardwareAbstractionLayer hal = systemInfo.getHardware();
+			ComputerSystem computerSystem = hal.getComputerSystem();
+
+			ObjectNode mbJson = mapper.createObjectNode();
+			mbJson.put("manufacturer", computerSystem.getManufacturer());
+			mbJson.put("model", computerSystem.getModel());
+			motherboardJson.set("motherboard", mbJson);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return motherboardJson;
+	}
+
+	// Gets CPU information (chipset, family, model, cores, clock speed, architecture, cache)
+	private ObjectNode getCPUInfo() {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode cpuInfoJson = mapper.createObjectNode();
+
+		try {
+			SystemInfo systemInfo = new SystemInfo();
+			HardwareAbstractionLayer hal = systemInfo.getHardware();
+			CentralProcessor processor = hal.getProcessor();
+
+			ObjectNode cpuJson = mapper.createObjectNode();
+			cpuJson.put("chipset", processor.getProcessorIdentifier().getName());
+			cpuJson.put("family", processor.getProcessorIdentifier().getFamily());
+			cpuJson.put("model", processor.getProcessorIdentifier().getModel());
+			cpuJson.put("numberProcessors", String.valueOf(processor.getLogicalProcessorCount()));
+			cpuJson.put("coreCount", String.valueOf(processor.getPhysicalProcessorCount()));
+			cpuJson.put("clockSpeed", formatClockSpeed(processor.getProcessorIdentifier().getVendorFreq()));
+			cpuJson.put("architecture", processor.getProcessorIdentifier().getMicroarchitecture());
+
+			// Add cache information
+			cpuJson.set("cache", getCPUCacheInfo(processor));
+
+			cpuInfoJson.set("cpu", cpuJson);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return cpuInfoJson;
+	}
+
+	// Gets CPU cache information (L1/L2/L3)
+	private ObjectNode getCPUCacheInfo(CentralProcessor processor) {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode cacheJson = mapper.createObjectNode();
+
+		try {
+			java.util.List<oshi.hardware.CentralProcessor.ProcessorCache> caches = processor.getProcessorCaches();
+			for (oshi.hardware.CentralProcessor.ProcessorCache cache : caches) {
+				String cacheType = cache.getType().toString();
+				cacheJson.put(cacheType.toLowerCase(), formatBytes(cache.getCacheSize()));
+			}
+			// If no caches found, add placeholder values
+			if (caches.isEmpty()) {
+				cacheJson.put("l1d", "");
+				cacheJson.put("l1i", "");
+				cacheJson.put("l2", "");
+				cacheJson.put("l3", "");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return cacheJson;
+	}
+
+	// Gets memory information (capacity, available, type, speed)
+	private ObjectNode getMemoryInfo() {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode memoryInfoJson = mapper.createObjectNode();
+
+		try {
+			SystemInfo systemInfo = new SystemInfo();
+			HardwareAbstractionLayer hal = systemInfo.getHardware();
+
+			ObjectNode memoryJson = mapper.createObjectNode();
+			long totalMemory = hal.getMemory().getTotal();
+			memoryJson.put("capacity", formatBytes(totalMemory));
+			memoryJson.put("available", formatBytes(hal.getMemory().getAvailable()));
+
+			memoryInfoJson.set("memory", memoryJson);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return memoryInfoJson;
+	}
+
+	// Gets PCI devices list (network and storage devices)
+	private ObjectNode getPCIDevices() {
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode pciJson = mapper.createObjectNode();
+
+		try {
+			SystemInfo systemInfo = new SystemInfo();
+			HardwareAbstractionLayer hal = systemInfo.getHardware();
+
+			java.util.List<ObjectNode> pciDevices = new java.util.ArrayList<>();
+
+			// Get network devices
+			for (oshi.hardware.NetworkIF netInterface : hal.getNetworkIFs()) {
+				ObjectNode deviceNode = mapper.createObjectNode();
+				deviceNode.put("type", "Network");
+				deviceNode.put("name", netInterface.getName());
+				deviceNode.put("displayName", netInterface.getDisplayName());
+				pciDevices.add(deviceNode);
+			}
+
+			// Get storage devices
+			java.util.List<oshi.hardware.HWDiskStore> disks = hal.getDiskStores();
+			for (oshi.hardware.HWDiskStore disk : disks) {
+				ObjectNode deviceNode = mapper.createObjectNode();
+				deviceNode.put("type", "Storage");
+				deviceNode.put("name", disk.getName());
+				deviceNode.put("model", disk.getModel());
+				deviceNode.put("size", formatBytes(disk.getSize()));
+				pciDevices.add(deviceNode);
+			}
+
+			if (!pciDevices.isEmpty()) {
+				pciJson.putPOJO("pciDevices", pciDevices);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return pciJson;
+	}
+
+	// Formats clock speed from Hz to GHz
+	private String formatClockSpeed(long clockSpeed) {
+		if (clockSpeed > 0) {
+			return String.format("%.2f GHz", clockSpeed / 1e9);
+		}
+		return "";
+	}
+
+	// Formats bytes to human-readable format
+	private String formatBytes(long bytes) {
+		if (bytes <= 0) return "0 B";
+		final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
+		int digitGroups = (int) (Math.log10(bytes) / Math.log10(1024));
+		return String.format("%.2f %s", bytes / Math.pow(1024, digitGroups), units[digitGroups]);
+	}
+
+
+	// Gets GPU info using OSHI library (cross-platform)
 	private ObjectNode getGPUJson(){
 
 		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode hwJson = mapper.createObjectNode();
+		ObjectNode gpuInfoJson = mapper.createObjectNode();
 
 		try{
-			// Create process
-			ProcessBuilder processBuilder = new ProcessBuilder("system_profiler", "SPDisplaysDataType", "-json");
-			processBuilder.redirectErrorStream(true);
+			// Initialize OSHI SystemInfo
+			SystemInfo systemInfo = new SystemInfo();
+			HardwareAbstractionLayer hal = systemInfo.getHardware();
 
-			// Start process
-			Process process = processBuilder.start();
-
-			// Read output of system_profiler command
-			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			StringBuilder output = new StringBuilder();
-			String line;
-			while ((line = reader.readLine()) != null){
-				output.append(line).append("\n");
-			}
-
-			// Wait for process to finish
-			int exitCode = process.waitFor();
-			if(exitCode != 0){
-				System.err.println("Error: system_profiler command failed.");
-				return hwJson;
-			}
-
-			JsonNode root = mapper.readTree(output.toString());
-			JsonNode displayData = root.path("SPDisplaysDataType");
-			if (!displayData.isArray() || displayData.isEmpty()) {
-				return hwJson;
-			}
-
-			JsonNode gpu = displayData.get(0);
+			// Get graphics cards
 			ObjectNode gpuNode = mapper.createObjectNode();
-			gpuNode.put("chipsetModel", gpu.path("sppci_model").asText(""));
-			gpuNode.put("type", gpu.path("sppci_device_type").asText(""));
-			gpuNode.put("bus", gpu.path("sppci_bus").asText(""));
-			gpuNode.put("cores", gpu.path("sppci_cores").asText(""));
-			gpuNode.put("vendor", gpu.path("spdisplays_vendor").asText(""));
-			hwJson.set("gpu", gpuNode);
-
-			JsonNode displays = gpu.path("spdisplays_ndrvs");
-			if (displays.isArray() && !displays.isEmpty()) {
-				JsonNode display = displays.get(0);
-				ObjectNode displayNode = mapper.createObjectNode();
-				displayNode.put("name", display.path("_name").asText(""));
-				displayNode.put("product_id", display.path("_spdisplays_display-product-id").asText(""));
-				displayNode.put("serial_number", display.path("_spdisplays_display-serial-number").asText(""));
-				displayNode.put("type", display.path("spdisplays_display_type").asText(""));
-				displayNode.put("pixels", display.path("_spdisplays_pixels").asText(""));
-				displayNode.put("resolution", display.path("_spdisplays_resolution").asText(""));
-				displayNode.put("connection", display.path("spdisplays_connection_type").asText(""));
-				hwJson.set("display", displayNode);
+			java.util.List<GraphicsCard> gpus = hal.getGraphicsCards();
+			if (!gpus.isEmpty()) {
+				GraphicsCard gpu = gpus.get(0);  // Get first GPU
+				gpuNode.put("chipsetModel", gpu.getName());
+				gpuNode.put("vendor", gpu.getVendor());
+				// For integrated GPUs (VRAM = 0), indicate shared system memory
+				long vram = gpu.getVRam();
+				if (vram == 0) {
+					gpuNode.put("memory", "Integrated - shared with system memory");
+				} else {
+					gpuNode.put("memory", formatBytes(vram));
+				}
 			}
+			gpuInfoJson.set("gpu", gpuNode);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 
-		return hwJson;
+		return gpuInfoJson;
 	}
 
 
