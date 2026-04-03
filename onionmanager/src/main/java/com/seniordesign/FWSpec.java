@@ -1,26 +1,18 @@
 package com.seniordesign;
-
-	import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-	import java.nio.charset.StandardCharsets;
-	import java.nio.file.Files;
-	import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-	import java.util.List;
-	import java.util.Map;
+import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import java.util.ArrayList;
 
 	public class FWSpec implements LayerRequirements{
+		public JsonNode wrappedObject;
 		public class FirmwareRecord {
 			String component;
 			String key, version;
@@ -76,7 +68,16 @@ import java.util.ArrayList;
 					"SPCameraDataType",
 					"SPDiscBurningDataType",
 					"SPSoftwareUpdateDataType",
-					"SPDiagnosticsDataType"				
+					"SPDiagnosticsDataType",
+					"SPEthernetDataType",
+					"SPFibreChannelDataType",
+					"SPNVMeDataType",
+					"SPPCIDataType",
+					"SPSASDataType",
+					"SPSPIDataType",
+					"SPSmartCardsDataType",
+					"SPUSBHostDataType",
+					"SPParallelATADataType"		
 				);
 				Process process = pb.start();
 				return process;
@@ -90,6 +91,7 @@ import java.util.ArrayList;
 		str = str.toLowerCase();
 		return (str.contains("firmware")
      			|| str.contains("loader")
+				|| str.contains("rom")
 			);
 	}
 	public void extractFirmware(JsonNode node, String currentDeviceName) {
@@ -106,7 +108,7 @@ import java.util.ArrayList;
                 JsonNode value = entry.getValue();
 
                 // Look for name-related keys
-                if (value.isValueNode() && (key.contains("_name") || key.contains("minor") || key.contains("charger_name"))) {
+                if (value.isValueNode() && (key.contains("rom") || key.contains("_name") || key.contains("minor") || key.contains("charger_name"))) {
                     // Prioritize specific name over generic
                     if (thisDeviceName == null || thisDeviceName.equals(currentDeviceName) || !key.equals("minor")) {
                         thisDeviceName = value.asText();
@@ -164,7 +166,8 @@ import java.util.ArrayList;
         try {
             process.waitFor();
             JsonNode root = mapper.readTree(process.getInputStream());
-
+			
+			this.wrappedObject = root;
             extractFirmware(root, null);
 
 			writeJsonFile("firmware", records);

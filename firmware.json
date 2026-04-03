@@ -1,7 +1,7 @@
 [ {
   "component" : "controller_properties",
   "key" : "controller_firmwareVersion",
-  "version" : "MAC FW Version: 1.515.221.0, PHY FW Version: 2.1.507.102"
+  "version" : "MAC FW Version: 1.542.0.0, PHY FW Version: 2.1.527.0"
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
@@ -9,7 +9,7 @@
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
-  "version" : "8B28"
+  "version" : "8B39"
 }, {
   "component" : "Headphones",
   "key" : "device_firmwareVersion",
@@ -20,8 +20,12 @@
   "version" : "6A300"
 }, {
   "component" : "MacBook Pro",
+  "key" : "boot_rom_version",
+  "version" : "18000.101.7"
+}, {
+  "component" : "MacBook Pro",
   "key" : "os_loader_version",
-  "version" : "13822.81.10"
+  "version" : "18000.101.7"
 }, {
   "component" : "bq40z651",
   "key" : "sppower_battery_firmware_version",
