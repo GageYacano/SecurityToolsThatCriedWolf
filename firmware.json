@@ -30,8 +30,4 @@
   "component" : "bq40z651",
   "key" : "sppower_battery_firmware_version",
   "version" : "0b00"
-}, {
-  "component" : "140W USB-C Power Adapter",
-  "key" : "sppower_ac_charger_firmware_version",
-  "version" : "01040084"
 } ]
