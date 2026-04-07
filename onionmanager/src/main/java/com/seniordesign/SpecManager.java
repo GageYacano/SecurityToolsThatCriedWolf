@@ -37,7 +37,7 @@ public class SpecManager {
 		else if(layer.equalsIgnoreCase("os")) {
 			return OS.toQuery();
 		}
-		else if(layer.equalsIgnoreCase("libary")) {
+		else if(layer.equalsIgnoreCase("library")) {
 			return Library.toQuery();
 		}
 		else if(layer.equalsIgnoreCase("apps")) {

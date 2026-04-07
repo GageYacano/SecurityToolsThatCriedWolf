@@ -16,6 +16,7 @@ public class OSSpec implements LayerRequirements {
 	// Constructor for OSSpec that runs loadData
 	OSSpec(){
 		loadData();
+		System.out.println("OS Loaded");
 	}
 
 	// Gets all the data you will be needing. This is basically your main

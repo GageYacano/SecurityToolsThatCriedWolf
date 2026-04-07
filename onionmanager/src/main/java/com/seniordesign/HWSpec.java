@@ -14,6 +14,11 @@ public class HWSpec implements LayerRequirements {
 	private String data = "";
 	private String currentData = "";
 	
+	HWSpec(){
+		loadData();
+		System.out.println("FWSpec Loaded");
+	}
+	
 	// Gets all the data you will be needing. This is basically your main
 	public void loadData() {
 		// Get all hardware data (CPU, memory, GPU, motherboard, storage, etc)

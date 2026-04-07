@@ -47,7 +47,6 @@ public class FWSpec implements LayerRequirements{
 		mapper.enable(SerializationFeature.INDENT_OUTPUT);
 
 		String json = String.format("{\n\"firmware\" : { %s \n}", mapper.writeValueAsString(object));
-		System.out.println(json);
 		Files.writeString(Paths.get(String.format("%s%s", filename, ".json")), json, StandardCharsets.UTF_8);
 	}
 
