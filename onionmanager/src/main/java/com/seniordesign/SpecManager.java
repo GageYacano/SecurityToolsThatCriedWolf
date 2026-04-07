@@ -26,4 +26,24 @@ public class SpecManager {
 		allLayersAsJson += Applications.toQuery() + "\n";
 		return allLayersAsJson;
 	}
+	
+	public String getSpecificQuery(String layer) {
+		if(layer.equalsIgnoreCase("hardware")) {
+			return HardWare.toQuery();
+		}
+		else if(layer.equalsIgnoreCase("firmware")) {
+			return FirmWare.toQuery();
+		}
+		else if(layer.equalsIgnoreCase("os")) {
+			return OS.toQuery();
+		}
+		else if(layer.equalsIgnoreCase("libary")) {
+			return Library.toQuery();
+		}
+		else if(layer.equalsIgnoreCase("apps")) {
+			return Applications.toQuery();
+		}
+		return "No layer of that name";
+	}
+
 }
