@@ -40,8 +40,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 			ObjectMapper mapper = new ObjectMapper();
 			mapper.enable(SerializationFeature.INDENT_OUTPUT);
 
-			String json = mapper.writeValueAsString(object);
-
+			String json = String.format("{\n\"firmware\" : { %s \n}", mapper.writeValueAsString(object));
+			System.out.println(json);
 			Files.writeString(Paths.get(String.format("%s%s", filename, ".json")), json, StandardCharsets.UTF_8);
 		}
 	@SuppressWarnings("unchecked")
@@ -171,7 +171,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
             extractFirmware(root, null);
 
 			writeJsonFile("firmware", records);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
