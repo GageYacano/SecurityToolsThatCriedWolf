@@ -12,12 +12,18 @@ public class SpecManager {
 	private String[] layerData;
 	
 	LayerRequirements HardWare = new HWSpec();
-	LayerRequirements FirmWare = new OSSpec();
-	LayerRequirements OS = new FWSpec();
+	LayerRequirements FirmWare = new FWSpec();
+	LayerRequirements OS = new OSSpec();
 	LayerRequirements Library = new Libs();
 	LayerRequirements Applications = new Apps();
 	
 	public String getQueries() {
-		return null;
+		String allLayersAsJson = "";
+		allLayersAsJson += HardWare.toQuery() + "\n";
+		allLayersAsJson += FirmWare.toQuery() + "\n";
+		allLayersAsJson += OS.toQuery() + "\n";
+		allLayersAsJson += Library.toQuery() + "\n";
+		allLayersAsJson += Applications.toQuery() + "\n";
+		return allLayersAsJson;
 	}
 }

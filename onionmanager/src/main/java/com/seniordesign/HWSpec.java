@@ -10,10 +10,7 @@ import oshi.hardware.ComputerSystem;
 import oshi.hardware.GraphicsCard;
 import oshi.hardware.HardwareAbstractionLayer;
 
-public class HWSpec implements LayerRequirements{
-	
-	// Stores the json info, will not be destroyed and will be used to check
-	// For any new changes each time load data is called
+public class HWSpec implements LayerRequirements {
 	private String data = "";
 	private String currentData = "";
 	
@@ -22,12 +19,11 @@ public class HWSpec implements LayerRequirements{
 		// Get all hardware data (CPU, memory, GPU, motherboard, storage, etc)
 		ObjectNode hwJson = getHardwareJson();
 
-		currentData= getCombinedJson(hwJson);
+		currentData = getCombinedJson(hwJson);
 
 		if(!checkDuplicate()){
 			data = currentData;
 		}
-
 		debugJson(data);
 	}
 
@@ -51,9 +47,12 @@ public class HWSpec implements LayerRequirements{
 
 		// Wrap all hardware data under top-level hardware object
 		combinedJson.set("hardware", hwJson);
-
-		return combinedJson.toString();
-
+		String combinedJsonString = "";
+		try {
+		combinedJsonString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(combinedJson);
+		} catch (Exception e) {}
+		
+		return combinedJsonString;
 	}
 
 	// Pretty-prints JSON for clean debug output
@@ -245,7 +244,6 @@ public class HWSpec implements LayerRequirements{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 		return pciJson;
 	}
 
@@ -260,11 +258,12 @@ public class HWSpec implements LayerRequirements{
 	// Formats bytes to human-readable format
 	private String formatBytes(long bytes) {
 		if (bytes <= 0) return "0 B";
+
 		final String[] units = new String[] { "B", "KB", "MB", "GB", "TB" };
 		int digitGroups = (int) (Math.log10(bytes) / Math.log10(1024));
+
 		return String.format("%.2f %s", bytes / Math.pow(1024, digitGroups), units[digitGroups]);
 	}
-
 
 	// Gets GPU info using OSHI library (cross-platform)
 	private ObjectNode getGPUJson(){
@@ -272,7 +271,7 @@ public class HWSpec implements LayerRequirements{
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode gpuInfoJson = mapper.createObjectNode();
 
-		try{
+		try {
 			// Initialize OSHI SystemInfo
 			SystemInfo systemInfo = new SystemInfo();
 			HardwareAbstractionLayer hal = systemInfo.getHardware();
@@ -280,25 +279,26 @@ public class HWSpec implements LayerRequirements{
 			// Get graphics cards
 			ObjectNode gpuNode = mapper.createObjectNode();
 			java.util.List<GraphicsCard> gpus = hal.getGraphicsCards();
+
 			if (!gpus.isEmpty()) {
 				GraphicsCard gpu = gpus.get(0);  // Get first GPU
 				gpuNode.put("chipsetModel", gpu.getName());
 				gpuNode.put("vendor", gpu.getVendor());
 				// For integrated GPUs (VRAM = 0), indicate shared system memory
 				long vram = gpu.getVRam();
+
 				if (vram == 0) {
 					gpuNode.put("memory", "Integrated - shared with system memory");
-				} else {
+				} 
+				else {
 					gpuNode.put("memory", formatBytes(vram));
 				}
 			}
 			gpuInfoJson.set("gpu", gpuNode);
-		}catch(Exception e){
+			
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
-
 		return gpuInfoJson;
 	}
-
-
 }

@@ -9,27 +9,21 @@ import oshi.software.os.OperatingSystem;
 import oshi.software.os.OperatingSystem.OSVersionInfo;
 
 public class OSSpec implements LayerRequirements {
-
 	// Stores the json info, will not be destroyed and will be used to check
 	// For any new changes each time load data is called
 	private String data = "";
-	private String currentData = "";
+
+	// Constructor for OSSpec that runs loadData
+	OSSpec(){
+		loadData();
+	}
 
 	// Gets all the data you will be needing. This is basically your main
 	public void loadData() {
 		ObjectNode osJson = getOSJson();
-		currentData = getCombinedJson(osJson);
-
-		if (!checkDuplicate()) {
-			data = currentData;
-		}
+		data = getCombinedJson(osJson);
 
 		debugJson(data);
-	}
-
-	// Returns true if data is the same as currentData and is not empty
-	public boolean checkDuplicate() {
-		return data.equals(currentData) && !data.isEmpty();
 	}
 
 	// Does checks and then returns info
@@ -51,11 +45,9 @@ public class OSSpec implements LayerRequirements {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode node = mapper.readTree(json);
-			String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-			System.out.println(pretty);
+			data = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
 		} catch (JsonProcessingException e) {
-			System.err.println("Failed to pretty-print JSON.");
-			e.printStackTrace();
+			data = e.toString();
 		}
 	}
 
@@ -86,23 +78,10 @@ public class OSSpec implements LayerRequirements {
 			osJson.put("hostname", networkParams.getHostName());
 			osJson.put("domainName", networkParams.getDomainName());
 
-			// Process and uptime info
-			osJson.put("processCount", os.getProcessCount());
-			osJson.put("threadCount", os.getThreadCount());
-			osJson.put("uptime", formatUptime(os.getSystemUptime()));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		return osJson;
-	}
-
-	// Formats uptime in seconds to a human-readable "Xd Xh Xm Xs" string
-	private String formatUptime(long seconds) {
-		long days = seconds / 86400;
-		long hours = (seconds % 86400) / 3600;
-		long minutes = (seconds % 3600) / 60;
-		long secs = seconds % 60;
-		return String.format("%dd %dh %dm %ds", days, hours, minutes, secs);
 	}
 }

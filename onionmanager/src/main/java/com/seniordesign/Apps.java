@@ -7,17 +7,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class Apps implements LayerRequirements{
-	
+public class Apps implements LayerRequirements {
+	// Default constructor that loads initial data.
+	Apps(){
+		loadData();	
+		System.out.println("Apps Loaded");
+	}
+
 	// Stores the json info, will not be destroyed and will be used to check
 	// For any new changes each time load data is called
 	private String data = "";
-	
+
 	// Gets all the data you will be needing. This is basically your main
 	public void loadData(){
 		StringBuilder myData = new StringBuilder();
 		ObjectMapper mapper = new ObjectMapper();
-		
+
 		try {
 			ProcessBuilder pb = new ProcessBuilder(
 				"system_profiler",
@@ -56,23 +61,13 @@ public class Apps implements LayerRequirements{
 			result.set("applications", filteredApps);
 
 			this.data = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
-            System.out.println(this.data);
-			
+
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
-		
 	}
-	
-	
-	public boolean checkDuplicate() {
-		// if data == "" 			--> return true
-		// if data != loadData.info --> return true
-		// if data == loadData.info --> return false
-		return false;
-	}
-	
-	// Does checks and then returns info
+
+	// Returns data
 	public String toQuery() {
 		loadData();
 		return data;

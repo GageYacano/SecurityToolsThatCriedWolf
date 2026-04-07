@@ -7,86 +7,92 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
-	public class FWSpec implements LayerRequirements{
-		public JsonNode wrappedObject;
-		public class FirmwareRecord {
-			String component;
-			String key, version;
+public class FWSpec implements LayerRequirements{
+	public ObjectNode wrappedObject;
 
-			public FirmwareRecord() {}
-    		public FirmwareRecord(String component, String key, String version) {
-				this.version = version;
-				this.component = component;
-				this.key = key;
-			}
-			public String getComponent() { return component; }
-    		public String getKey() { return key; }
-    		public String getVersion() { return version; }
+	public class FirmwareRecord {
+		String component;
+		String key, version;
+
+		public FirmwareRecord() {}
+		public FirmwareRecord(String component, String key, String version) {
+			this.version = version;
+			this.component = component;
+			this.key = key;
 		}
-		// Stores the json info, will not be destroyed and will be used to check
-		// For any new changes each time load data is called
-		private ArrayList<FirmwareRecord> records = new ArrayList<>();
+		public String getComponent() { return component; }
+		public String getKey() { return key; }
+		public String getVersion() { return version; }
+	}
 
-		public FWSpec() {
-			this.loadData();	
-			System.out.println("FWSpec Loaded");
-		}
+	// Stores the json info, will not be destroyed and will be used to check
+	// For any new changes each time load data is called
+	private ArrayList<FirmwareRecord> records = new ArrayList<>();
 
-		private static void writeJsonFile(String filename, ArrayList<FirmwareRecord> object) throws IOException {
-			ObjectMapper mapper = new ObjectMapper();
-			mapper.enable(SerializationFeature.INDENT_OUTPUT);
+	public FWSpec() {
+		loadData();
+		System.out.println("FWSpec Loaded");
+	}
 
-			String json = String.format("{\n\"firmware\" : { %s \n}", mapper.writeValueAsString(object));
-			System.out.println(json);
-			Files.writeString(Paths.get(String.format("%s%s", filename, ".json")), json, StandardCharsets.UTF_8);
-		}
+	private static void writeJsonFile(String filename, ArrayList<FirmwareRecord> object) throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+		String json = String.format("{\n\"firmware\" : { %s \n}", mapper.writeValueAsString(object));
+		System.out.println(json);
+		Files.writeString(Paths.get(String.format("%s%s", filename, ".json")), json, StandardCharsets.UTF_8);
+	}
+
 	@SuppressWarnings("unchecked")
-		public Process CollectFirmwareInfo() {
-			try {
-				ProcessBuilder pb = new ProcessBuilder("system_profiler",  "-json", "-detailLevel", "full",
-					"SPSoftwareDataType",
-					"SPiBootDataType",
-					"SPiBridgeDataType",
-					"SPHardwareDataType",
-					"SPNetworkDataType",
-					"SPStorageDataType",
-					"SPDisplaysDataType",
-					"SPAudioDataType",
-					"SPBluetoothDataType",
-					"SPPrintersDataType",
-					"SPUSBDataType",
-					"SPPowerDataType",
-					"SPMemoryDataType",
-					"SPSerialATADataType",
-					"SPThunderboltDataType",
-					"SPFireWireDataType",
-					"SPCardReaderDataType",
-					"SPCameraDataType",
-					"SPDiscBurningDataType",
-					"SPSoftwareUpdateDataType",
-					"SPDiagnosticsDataType",
-					"SPEthernetDataType",
-					"SPFibreChannelDataType",
-					"SPNVMeDataType",
-					"SPPCIDataType",
-					"SPSASDataType",
-					"SPSPIDataType",
-					"SPSmartCardsDataType",
-					"SPUSBHostDataType",
-					"SPParallelATADataType"		
-				);
-				Process process = pb.start();
-				return process;
-			} catch (Exception e) {
-				// Handle exception
-				e.printStackTrace();
-				return null;
-			}
+	public Process CollectFirmwareInfo() {
+		try {
+			ProcessBuilder pb = new ProcessBuilder("system_profiler",  "-json", "-detailLevel", "full",
+				"SPSoftwareDataType",
+				"SPiBootDataType",
+				"SPiBridgeDataType",
+				"SPHardwareDataType",
+				"SPNetworkDataType",
+				"SPStorageDataType",
+				"SPDisplaysDataType",
+				"SPAudioDataType",
+				"SPBluetoothDataType",
+				"SPPrintersDataType",
+				"SPUSBDataType",
+				"SPPowerDataType",
+				"SPMemoryDataType",
+				"SPSerialATADataType",
+				"SPThunderboltDataType",
+				"SPFireWireDataType",
+				"SPCardReaderDataType",
+				"SPCameraDataType",
+				"SPDiscBurningDataType",
+				"SPSoftwareUpdateDataType",
+				"SPDiagnosticsDataType",
+				"SPEthernetDataType",
+				"SPFibreChannelDataType",
+				"SPNVMeDataType",
+				"SPPCIDataType",
+				"SPSASDataType",
+				"SPSPIDataType",
+				"SPSmartCardsDataType",
+				"SPUSBHostDataType",
+				"SPParallelATADataType"		
+			);
+			Process process = pb.start();
+			return process;
+		} catch (Exception e) {
+			// Handle exception
+			e.printStackTrace();
+			return null;
 		}
+	}
+
 	public boolean isFirmwarePath(String str) {
 		str = str.toLowerCase();
 		return (str.contains("firmware")
@@ -94,11 +100,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 				|| str.contains("rom")
 			);
 	}
+
 	public void extractFirmware(JsonNode node, String currentDeviceName) {
-
         if (node.isObject()) {
-
-            // First pass, find the actual name of the objectz
+            // First pass, find the actual name of the object
             String thisDeviceName = currentDeviceName;
             Iterator<Map.Entry<String, JsonNode>> nameSearch = node.fields();
 
@@ -141,15 +146,12 @@ import com.fasterxml.jackson.databind.SerializationFeature;
                     System.out.println("Firmware Version: " + value.asText());
                     System.out.println();
 					*/
-
                 }
-
                 // Recurse using updated name
                 extractFirmware(value, nextDeviceName);
             }
-
-        } else if (node.isArray()) {
-
+        }
+        else if (node.isArray()) {
             for (JsonNode element : node) {
                 extractFirmware(element, currentDeviceName);
             }
@@ -157,7 +159,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
     }
 
     // Gets all the data you will be needing. This is basically your main
-    @Override
     public void loadData() {
 
         Process process = CollectFirmwareInfo();
@@ -165,27 +166,29 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
         try {
             process.waitFor();
-            JsonNode root = mapper.readTree(process.getInputStream());
-			
-			this.wrappedObject = root;
-            extractFirmware(root, null);
 
+            JsonNode root = mapper.readTree(process.getInputStream());
+			wrappedObject.set("firmware", root);
+
+			// Extract Firmware preps root to be printed to the file
+			extractFirmware(root, null);
 			writeJsonFile("firmware", records);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-		public boolean checkDuplicate() {
-			// if data == "" 			--> return true
-			// if data != loadData.info --> return true
-			// if data == loadData.info --> return false
-			return false;
-		}
-
 		// Does checks and then returns info
 		public String toQuery() {
+	        ObjectMapper mapper = new ObjectMapper();
 			loadData();
-			return "";
+			String data = "";
+
+			try {
+				data = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(wrappedObject);
+			} catch (JsonProcessingException e) {
+				data = e.toString();
+			}
+			return data;
 		}
 	}

@@ -83,14 +83,6 @@ public class Libs implements LayerRequirements{
         } catch (JsonProcessingException ex) {
             System.getLogger(Libs.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
-        System.out.println(data);
-    }
-    
-    public boolean checkDuplicate() {
-        // if data == ""             --> return true
-        // if data != loadData.info --> return true
-        // if data == loadData.info --> return false
-        return false;
     }
 
     // Does checks and then returns info
