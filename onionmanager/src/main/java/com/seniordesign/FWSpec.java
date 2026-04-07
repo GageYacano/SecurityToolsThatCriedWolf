@@ -36,6 +36,8 @@ public class FWSpec implements LayerRequirements{
 	private ArrayList<FirmwareRecord> records = new ArrayList<>();
 
 	public FWSpec() {
+		ObjectMapper mapper = new ObjectMapper();
+		wrappedObject = mapper.createObjectNode();
 		loadData();
 		System.out.println("FWSpec Loaded");
 	}
