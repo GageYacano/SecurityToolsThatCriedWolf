@@ -16,7 +16,7 @@ public class HWSpec implements LayerRequirements {
 	
 	HWSpec(){
 		loadData();
-		System.out.println("FWSpec Loaded");
+		System.out.println("HWSpec Loaded");
 	}
 	
 	// Gets all the data you will be needing. This is basically your main
@@ -29,7 +29,7 @@ public class HWSpec implements LayerRequirements {
 		if(!checkDuplicate()){
 			data = currentData;
 		}
-		debugJson(data);
+		//debugJson(data);
 	}
 
 	// returns true if the data is the same as the current data and is not empty, otherwise returns false

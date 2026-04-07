@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class Libs implements LayerRequirements{
     public Libs() {
         loadData();
+        System.out.println("Libraries Loaded");
     }
     // Stores the json info, will not be destroyed and will be used to check
     // For any new changes each time load data is called
