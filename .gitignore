@@ -6,3 +6,9 @@
 /out/
 *.json
 *.class
+.DS_Store
+frontend/node_modules/
+frontend/dist/
+frontend/backend/*.jar
+!frontend/package.json
+!frontend/package-lock.json

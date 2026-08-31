@@ -1,0 +1,45 @@
+{
+  "name": "onionmanager-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron frontend for OnionManager",
+  "author": "SecurityToolsThatCriedWolf",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "npm run build:backend && concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron electron/main.cjs --dev\"",
+    "build:backend": "node scripts/build-backend.cjs",
+    "build": "npm run build:backend && vite build",
+    "start": "electron electron/main.cjs",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/material": "^9.4.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.1",
+    "electron": "^37.4.0",
+    "electron-builder": "25.1.8",
+    "vite": "^6.3.5",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.seniordesign.onionmanager",
+    "publish": null,
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend/OnionManager.jar",
+        "to": "OnionManager.jar"
+      }
+    ]
+  }
+}
