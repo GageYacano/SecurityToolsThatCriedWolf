@@ -69,8 +69,26 @@ button {
 .content-panel {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 26px 28px 40px;
+  padding: 42px 28px 56px;
   background: #ffffff;
+}
+
+.page-header {
+  margin: 0 0 42px;
+}
+
+.page-title {
+  color: #1e2430 !important;
+  font-size: clamp(2.7rem, 5vw, 4rem) !important;
+  line-height: 0.96 !important;
+  margin: 0 !important;
+}
+
+.page-subtitle {
+  color: #697180;
+  font-size: clamp(1rem, 1.6vw, 1.15rem) !important;
+  line-height: 1.45 !important;
+  margin-top: 12px !important;
 }
 
 .heading-row {
@@ -78,14 +96,33 @@ button {
 }
 
 .section-block + .section-block {
-  margin-top: 42px;
+  margin-top: 36px;
+}
+
+.section-card {
+  background: #fcfcfd;
+  border: 1px solid #d4d7dc;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(31, 36, 45, 0.06);
+  padding: 26px;
+}
+
+.section-heading {
+  margin-bottom: 24px;
 }
 
 .section-title {
-  color: #1e2430 !important;
-  font-size: clamp(2.2rem, 4vw, 3.2rem) !important;
-  line-height: 0.96 !important;
-  margin: 12px 0 0.5rem !important;
+  color: #282d38 !important;
+  font-size: clamp(1.45rem, 2.5vw, 1.8rem) !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+.section-subtitle {
+  color: #747b88;
+  font-size: 0.95rem !important;
+  line-height: 1.45 !important;
+  margin-top: 6px !important;
 }
 
 .action-row {
@@ -115,12 +152,6 @@ button {
   text-transform: uppercase;
 }
 
-.page-title {
-  color: #1e2430 !important;
-  font-size: clamp(2.7rem, 5vw, 4rem) !important;
-  line-height: 0.96 !important;
-}
-
 .status-row {
   margin-top: 0;
   background: rgba(15, 20, 30, 0.04);
@@ -134,16 +165,16 @@ button {
 }
 
 .accordion-stack {
-  margin-top: 30px;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
 .accordion-stack .MuiAccordion-root {
-  background: #dfe2e7 !important;
-  border: 1px solid #111111 !important;
-  border-radius: 0px !important;
+  background: #e5e7eb !important;
+  border: 1px solid #b9bec6 !important;
+  border-radius: 6px !important;
   margin: 0 !important;
   box-shadow: none !important;
 }
@@ -249,3 +280,24 @@ button {
   font-style: italic;
 }
 
+@media (max-width: 640px) {
+  .content-panel {
+    padding: 28px 16px 40px;
+  }
+
+  .page-header {
+    margin-bottom: 30px;
+  }
+
+  .section-card {
+    padding: 18px;
+  }
+
+  .action-row {
+    justify-content: stretch;
+  }
+
+  .action-row .MuiButton-root {
+    width: 100%;
+  }
+}

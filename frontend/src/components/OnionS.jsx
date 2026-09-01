@@ -72,19 +72,23 @@ export default function OnionS() {
   }
 
   return (
-    <section className="section-block" aria-labelledby="onions-heading">
-      <Typography id="onions-heading" component="h4" variant="h4" className="section-title">
-        OnionS
-      </Typography>
-      <LayerAccordionTable data={systemConfig} emptyMessage="No system configuration loaded." />
-      <Stack direction="row" justifyContent="flex-end" className="action-row">
-        <ActionButton isLoading={isLoading} onClick={runOnionManager}>
-          Get OnionS
-        </ActionButton>
-      </Stack>
-      {/*<Typography className="section-status" role="status">*/}
-      {/*  {status}*/}
-      {/*</Typography>*/}
+    <section className="section-block" aria-labelledby="inventory-heading">
+      <Box className="section-card">
+        <Box className="section-heading">
+          <Typography id="inventory-heading" component="h2" variant="h5" className="section-title">
+            OnionS
+          </Typography>
+          <Typography className="section-subtitle">
+            Components detected on this device organized by layers
+          </Typography>
+        </Box>
+        <LayerAccordionTable data={systemConfig} emptyMessage="No system configuration loaded." />
+        <Stack direction="row" justifyContent="flex-end" className="action-row">
+          <ActionButton isLoading={isLoading} onClick={runOnionManager}>
+            Get OnionS
+          </ActionButton>
+        </Stack>
+      </Box>
     </section>
   );
 }

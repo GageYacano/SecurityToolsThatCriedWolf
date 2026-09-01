@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Box, ThemeProvider, createTheme } from "@mui/material";
+import { Box, ThemeProvider, Typography, createTheme } from "@mui/material";
 import OnionS from "./components/OnionS";
 import Vulnerabilities from "./components/Vulnerabilities";
 import "./styles.css";
@@ -75,6 +75,14 @@ function App() {
     <ThemeProvider theme={theme}>
       <main className="app-shell">
         <Box className="content-panel">
+          <header className="page-header">
+            <Typography component="h1" variant="h2" className="page-title">
+              OnionManager
+            </Typography>
+            <Typography className="page-subtitle">
+              System configuration and vulnerability analysis
+            </Typography>
+          </header>
           <OnionS />
           <Vulnerabilities />
         </Box>
