@@ -60,9 +60,11 @@ public class Libs implements LayerRequirements{
                 while ((line = reader.readLine()) != null) {
                     ObjectNode libTemp = mapper.createObjectNode();
                     String[] splitString = line.split(" ");
-                    libTemp.put("name", splitString[0]);
-                    libTemp.put("version:", splitString[1]);
-                    libs.add(libTemp);
+                    if (splitString.length >= 2) {
+                        libTemp.put("name", splitString[0]);
+                        libTemp.put("version", splitString[1]);
+                        libs.add(libTemp);
+                    }
                 }
     
                 int exitCode = process.waitFor();
