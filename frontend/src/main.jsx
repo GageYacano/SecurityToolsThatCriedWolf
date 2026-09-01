@@ -1,17 +1,27 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Box, ThemeProvider, Typography, createTheme } from "@mui/material";
+import { Box, IconButton, ThemeProvider, Typography, createTheme } from "@mui/material";
 import OnionS from "./components/OnionS";
+import SettingsPopup from "./components/SettingsPopup";
 import Vulnerabilities from "./components/Vulnerabilities";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import "./styles.css";
 
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: { main: "#7a67de" },
-    background: { default: "#ffffff", paper: "#dfe2e7" },
-    text: { primary: "#1b1f2d", secondary: "#4d5874" },
-  },
+function createAppTheme(isDarkMode) {
+  return createTheme({
+    palette: {
+      mode: isDarkMode ? "dark" : "light",
+      primary: { main: "#7a67de" },
+      background: {
+        default: isDarkMode ? "#17191d" : "#ffffff",
+        paper: isDarkMode ? "#292d33" : "#dfe2e7",
+      },
+      text: {
+        primary: isDarkMode ? "#f1f3f5" : "#1b1f2d",
+        secondary: isDarkMode ? "#b8bec8" : "#4d5874",
+      },
+    },
   typography: {
     fontFamily: '"Segoe UI", "Helvetica Neue", sans-serif',
     h1: { fontWeight: 800, letterSpacing: "-0.04em" },
@@ -68,20 +78,38 @@ const theme = createTheme({
       },
     },
   },
-});
+  });
+}
 
 function App() {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const theme = useMemo(() => createAppTheme(isDarkMode), [isDarkMode]);
+
   return (
     <ThemeProvider theme={theme}>
-      <main className="app-shell">
+      <main className={`app-shell${isDarkMode ? " dark-mode" : ""}`}>
         <Box className="content-panel">
           <header className="page-header">
-            <Typography component="h1" variant="h2" className="page-title">
-              OnionManager
-            </Typography>
-            <Typography className="page-subtitle">
-              System configuration and vulnerability analysis
-            </Typography>
+            <Box>
+              <Typography component="h1" variant="h2" className="page-title">
+                OnionManager
+              </Typography>
+              <Typography className="page-subtitle">
+                System configuration and vulnerability analysis
+              </Typography>
+            </Box>
+            <Box className="header-actions">
+              <SettingsPopup />
+              <IconButton
+                className="theme-toggle"
+                onClick={() => setIsDarkMode((current) => !current)}
+                aria-pressed={isDarkMode}
+                aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+                title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {isDarkMode ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+              </IconButton>
+            </Box>
           </header>
           <OnionS />
           <Vulnerabilities />
