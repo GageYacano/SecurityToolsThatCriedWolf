@@ -28,6 +28,10 @@ function createWindow() {
     },
   });
 
+  mainWindow.on("closed", () => {
+    mainWindow = undefined;
+  });
+
   if (process.argv.includes("--dev")) {
     mainWindow.loadURL("http://localhost:5173");
   } else {
@@ -39,7 +43,9 @@ function sendOutput(stream, data) {
   const text = data.toString();
   const message = { stream, text };
   console[stream === "stderr" ? "error" : "log"](`[OnionManager ${stream}] ${text.trimEnd()}`);
-  mainWindow?.webContents.send("onion-manager:output", message);
+  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
+    mainWindow.webContents.send("onion-manager:output", message);
+  }
 }
 
 function runOnionManager() {
@@ -76,6 +82,11 @@ function runOnionManager() {
 app.whenReady().then(() => {
   ipcMain.handle("onion-manager:run", runOnionManager);
   createWindow();
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
 });
 
 app.on("window-all-closed", () => {

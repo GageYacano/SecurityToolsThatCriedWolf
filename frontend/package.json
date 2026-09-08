@@ -31,6 +31,9 @@
   "build": {
     "appId": "com.seniordesign.onionmanager",
     "publish": null,
+    "directories": {
+      "output": "release"
+    },
     "files": [
       "dist/**/*",
       "electron/**/*"

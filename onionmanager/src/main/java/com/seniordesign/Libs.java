@@ -3,6 +3,9 @@ package com.seniordesign;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.File;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +13,26 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Libs implements LayerRequirements{
+    private static String resolveBrew() throws IOException {
+        // Honor custom installations on PATH, then check standard macOS locations.
+        String searchPath = System.getenv("PATH");
+        if (searchPath != null) {
+            for (String directory : searchPath.split(File.pathSeparator)) {
+                if (directory.isBlank()) continue;
+                Path candidate = Path.of(directory, "brew");
+                if (Files.isRegularFile(candidate) && Files.isExecutable(candidate)) {
+                    return candidate.toAbsolutePath().toString();
+                }
+            }
+        }
+        for (String location : new String[]{"/opt/homebrew/bin/brew", "/usr/local/bin/brew"}) {
+            if (Files.isRegularFile(Path.of(location)) && Files.isExecutable(Path.of(location))) {
+                return location;
+            }
+        }
+        throw new IOException("Homebrew was not found. Install Homebrew to collect library data.");
+    }
+
     public Libs() {
         loadData();
         System.out.println("Libraries Loaded");
@@ -23,6 +46,7 @@ public class Libs implements LayerRequirements{
         String os = System.getProperty("os.name");
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode libs = mapper.createArrayNode();
+        String libraryError = null;
         
         if(os.toLowerCase().contains("windows")) {
             String command = "winget export -o packages.json"; 
@@ -48,9 +72,10 @@ public class Libs implements LayerRequirements{
             }
         }
                 else if(os.toLowerCase().contains("mac")){
-            ProcessBuilder builder = new ProcessBuilder("brew", "list", "--versions");
             Process process;
             try {
+                ProcessBuilder builder = new ProcessBuilder(resolveBrew(), "list", "--versions");
+                builder.redirectError(ProcessBuilder.Redirect.INHERIT);
                 process = builder.start();
             
                 BufferedReader reader = new BufferedReader(
@@ -69,9 +94,14 @@ public class Libs implements LayerRequirements{
     
                 int exitCode = process.waitFor();
                 System.out.println("Exited with code: " + exitCode);
+                if (exitCode != 0) {
+                    libraryError = "Homebrew library collection failed (exit code " + exitCode + ").";
+                }
             } 
             catch (IOException | InterruptedException e) {
                 e.printStackTrace();
+                libraryError = "Unable to collect Homebrew libraries: " + e.getMessage();
+                if (e instanceof InterruptedException) Thread.currentThread().interrupt();
             }
         }
         
@@ -79,7 +109,11 @@ public class Libs implements LayerRequirements{
             
         }
         ObjectNode root = mapper.createObjectNode();
-        root.set("libraries", libs);
+        if (libraryError != null) {
+            root.putObject("libraries").put("error", libraryError);
+        } else {
+            root.set("libraries", libs);
+        }
         
         try {
             data = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);

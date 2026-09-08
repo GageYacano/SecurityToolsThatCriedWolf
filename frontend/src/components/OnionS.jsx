@@ -43,8 +43,8 @@ export default function OnionS() {
           setIsLoading(false);
         }
       } else if (stream === "stderr") {
-        setStatus("Error while collecting system config");
-        setIsLoading(false);
+        // Diagnostics do not mean collection has finished; wait for JSON or exit.
+        setStatus("Backend reported diagnostics while collecting system config");
       }
     });
 

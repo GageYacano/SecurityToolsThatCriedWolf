@@ -12,7 +12,7 @@ the window.
   unless a JRE is bundled)
 - Maven (needed only on the build machine)
 - macOS tools used by OnionManager, including `system_profiler` and (for
-  library data) Homebrew's `brew`
+  library data) Homebrew's `brew`**
 
 ## Run
 
@@ -35,7 +35,7 @@ npm run dist
 ```
 
 `electron-builder` detects the current operating system and architecture. The
-artifacts are written to `frontend/dist/`:
+artifacts are written to `frontend/release/`:
 
 - macOS: send the `.dmg` installer (or `.zip`) to Mac users.
 - Windows: send the generated `.exe` installer to Windows users.
