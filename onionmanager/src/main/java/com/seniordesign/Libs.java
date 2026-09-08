@@ -32,11 +32,6 @@ public class Libs implements LayerRequirements{
         }
         throw new IOException("Homebrew was not found. Install Homebrew to collect library data.");
     }
-
-    public Libs() {
-        loadData();
-        System.out.println("Libraries Loaded");
-    }
     // Stores the json info, will not be destroyed and will be used to check
     // For any new changes each time load data is called
     private String data = "";
@@ -48,30 +43,7 @@ public class Libs implements LayerRequirements{
         ArrayNode libs = mapper.createArrayNode();
         String libraryError = null;
         
-        if(os.toLowerCase().contains("windows")) {
-            String command = "winget export -o packages.json"; 
-            ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", command);
-            
-            Process process;
-            try {
-                process = builder.start();
-            
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()));
-    
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    System.out.println(line);
-                }
-    
-                int exitCode = process.waitFor();
-                System.out.println("Exited with code: " + exitCode);
-            } 
-            catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-                else if(os.toLowerCase().contains("mac")){
+        if(os.toLowerCase(java.util.Locale.ROOT).contains("mac")){
             Process process;
             try {
                 ProcessBuilder builder = new ProcessBuilder(resolveBrew(), "list", "--versions");
@@ -93,7 +65,7 @@ public class Libs implements LayerRequirements{
                 }
     
                 int exitCode = process.waitFor();
-                System.out.println("Exited with code: " + exitCode);
+                System.err.println("Exited with code: " + exitCode);
                 if (exitCode != 0) {
                     libraryError = "Homebrew library collection failed (exit code " + exitCode + ").";
                 }
@@ -105,8 +77,8 @@ public class Libs implements LayerRequirements{
             }
         }
         
-        else if(os.toLowerCase().contains("linux")) {
-            
+        else {
+            libraryError = "Library collection is not supported on this operating system yet.";
         }
         ObjectNode root = mapper.createObjectNode();
         if (libraryError != null) {
@@ -118,7 +90,7 @@ public class Libs implements LayerRequirements{
         try {
             data = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);
         } catch (JsonProcessingException ex) {
-            System.getLogger(Libs.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+            throw new IllegalStateException("Unable to serialize library data", ex);
         }
     }
 

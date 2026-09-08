@@ -8,11 +8,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class Apps implements LayerRequirements {
-	// Default constructor that loads initial data.
-	Apps(){
-		loadData();	
-		System.out.println("Apps Loaded");
-	}
 
 	// Stores the json info, will not be destroyed and will be used to check
 	// For any new changes each time load data is called
@@ -31,7 +26,7 @@ public class Apps implements LayerRequirements {
 				"mini",
 				"-json"
 			);
-			pb.redirectErrorStream(true);
+			pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 			Process process = pb.start();
 
 			try (BufferedReader reader = new BufferedReader(
@@ -41,10 +36,11 @@ public class Apps implements LayerRequirements {
 					myData.append(line).append("\n");
 				}
 			}
-			process.waitFor();
+			if (process.waitFor() != 0) throw new IOException("Application command failed");
 
 			JsonNode root = mapper.readTree(myData.toString());
 			JsonNode appList = root.path("SPApplicationsDataType");
+			if (!appList.isArray()) throw new IOException("Application command returned invalid data");
 			ArrayNode filteredApps = mapper.createArrayNode();
 			
 			if (appList.isArray()) {
@@ -63,7 +59,7 @@ public class Apps implements LayerRequirements {
 			this.data = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
 
 		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect Apps data", e);
 		}
 	}
 

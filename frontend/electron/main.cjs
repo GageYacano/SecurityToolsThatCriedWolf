@@ -48,39 +48,91 @@ function sendOutput(stream, data) {
   }
 }
 
-function runOnionManager() {
-  if (onionManagerProcess) {
-    return { started: false, message: "OnionManager is already running." };
+function snapshotPath() {
+  const directory = app.isPackaged ? "OnionManager" : "OnionManager-dev";
+  return path.join(app.getPath("appData"), directory, "snapshots", "latest-config.json");
+}
+
+async function readSnapshot() {
+  try {
+    const snapshot = JSON.parse(await fs.promises.readFile(snapshotPath(), "utf8"));
+    const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+    const layers = ["hardware", "firmware", "os", "libraries", "applications"];
+    if (!isObject(snapshot) || snapshot.schemaVersion !== 1 ||
+        typeof snapshot.collectedAt !== "string" || !Number.isFinite(Date.parse(snapshot.collectedAt)) ||
+        !isObject(snapshot.config) || !layers.every((layer) => {
+          const value = snapshot.config[layer];
+          if (!isObject(value) && !Array.isArray(value)) return false;
+          return !Object.hasOwn(value, "error") || typeof value.error === "string";
+        })) {
+      throw new Error("Invalid or unsupported configuration snapshot.");
+    }
+    return { status: "found", snapshot };
+  } catch (error) {
+    if (error.code === "ENOENT") return { status: "missing" };
+    return { status: "error", message: `Unable to read saved configuration: ${error.message}` };
   }
+}
 
-  const jarPath = resolveJarPath();
-  if (!fs.existsSync(jarPath)) {
-    const message = `OnionManager JAR not found at ${jarPath}. Run "npm run build" first.`;
-    sendOutput("stderr", `${message}\n`);
-    return { started: false, message };
+let collectionRunning = false;
+
+async function runOnionManager() {
+  if (collectionRunning) {
+    return { status: "busy", message: "OnionManager is already running." };
   }
+  // Set before filesystem awaits to prevent two IPC requests from starting runs.
+  collectionRunning = true;
+  try {
+    const jarPath = resolveJarPath();
+    if (!fs.existsSync(jarPath)) {
+      return { status: "error", message: 'OnionManager JAR not found. Rebuild or reinstall the application.' };
+    }
+    const output = snapshotPath();
+    await fs.promises.mkdir(path.dirname(output), { recursive: true });
+    // The window may have closed while the directory was being created.
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return { status: "error", message: "Collection cancelled." };
+    }
+    const result = await new Promise((resolve) => {
+      const child = spawn("java", ["-jar", jarPath, "--output", output], {
+        cwd: path.dirname(output),
+        stdio: ["ignore", "pipe", "pipe"],
+        windowsHide: true,
+      });
+      onionManagerProcess = child;
+      let launchError;
+      child.stdout.on("data", (data) => sendOutput("stdout", data));
+      child.stderr.on("data", (data) => sendOutput("stderr", data));
+      child.on("error", (error) => {
+        launchError = `Failed to start Java: ${error.message}. Install Java 17 and ensure java is on PATH.`;
+        sendOutput("stderr", launchError);
+      });
+      child.on("close", (code, signal) => {
+        if (onionManagerProcess === child) onionManagerProcess = undefined;
+        if (launchError) resolve({ status: "error", message: launchError });
+        else if (code === 2) resolve({ status: "busy", message: "Another configuration collection is already running." });
+        else if (code !== 0 || signal) resolve({ status: "error", message: "Collection failed or was cancelled. Previous saved configuration was preserved." });
+        else resolve({ status: "success" });
+      });
+    });
+    if (result.status !== "success") return result;
+    const saved = await readSnapshot();
+    if (saved.status === "found") return { status: "success", snapshot: saved.snapshot };
+    return { status: "error", message: saved.message || "Collection finished without a saved configuration." };
+  } catch (error) {
+    return { status: "error", message: `Unable to collect configuration: ${error.message}` };
+  } finally {
+    collectionRunning = false;
+  }
+}
 
-  onionManagerProcess = spawn(
-    "java",
-    ["-jar", jarPath],
-    { cwd: app.getPath("userData"), stdio: ["pipe", "pipe", "pipe"] },
-  );
-
-  onionManagerProcess.stdout.on("data", (data) => sendOutput("stdout", data));
-  onionManagerProcess.stderr.on("data", (data) => sendOutput("stderr", data));
-  onionManagerProcess.on("error", (error) => {
-    sendOutput("stderr", `Failed to start Java: ${error.message}\nInstall Java 17 and ensure "java" is on PATH.\n`);
-  });
-  onionManagerProcess.on("close", (code, signal) => {
-    sendOutput("status", `Process exited with code ${code ?? "unknown"}${signal ? ` (${signal})` : ""}.\n`);
-    onionManagerProcess = undefined;
-  });
-
-  return { started: true, message: "OnionManager started." };
+function stopCollection() {
+  onionManagerProcess?.kill();
 }
 
 app.whenReady().then(() => {
   ipcMain.handle("onion-manager:run", runOnionManager);
+  ipcMain.handle("onion-manager:read-snapshot", readSnapshot);
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -90,10 +142,10 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (onionManagerProcess) {
-    onionManagerProcess.kill();
-  }
+  stopCollection();
   if (process.platform !== "darwin") {
     app.quit();
   }
 });
+
+app.on("before-quit", stopCollection);

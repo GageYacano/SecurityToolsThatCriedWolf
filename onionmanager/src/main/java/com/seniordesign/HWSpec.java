@@ -14,11 +14,6 @@ public class HWSpec implements LayerRequirements {
 	private String data = "";
 	private String currentData = "";
 	
-	HWSpec(){
-		loadData();
-		System.out.println("HWSpec Loaded");
-	}
-	
 	// Gets all the data you will be needing. This is basically your main
 	public void loadData() {
 		// Get all hardware data (CPU, memory, GPU, motherboard, storage, etc)
@@ -55,7 +50,7 @@ public class HWSpec implements LayerRequirements {
 		String combinedJsonString = "";
 		try {
 		combinedJsonString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(combinedJson);
-		} catch (Exception e) {}
+		} catch (Exception e) { throw new IllegalStateException("Unable to serialize hardware data", e); }
 		
 		return combinedJsonString;
 	}
@@ -66,10 +61,10 @@ public class HWSpec implements LayerRequirements {
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode node = mapper.readTree(json);
 			String pretty = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-			System.out.println(pretty);
+			System.err.println(pretty);
 		} catch (JsonProcessingException e) {
 			System.err.println("Failed to pretty-print JSON.");
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 	}
 
@@ -88,7 +83,7 @@ public class HWSpec implements LayerRequirements {
 			hwJson.setAll(getPCIDevices());
 			hwJson.setAll(getGPUJson());
 		}catch(Exception e){
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 
 		return hwJson;
@@ -108,7 +103,7 @@ public class HWSpec implements LayerRequirements {
 			systemJson.put("name", computerSystem.getManufacturer());
 			systemJson.put("serialNumber", computerSystem.getSerialNumber());
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 
 		return systemJson;
@@ -129,7 +124,7 @@ public class HWSpec implements LayerRequirements {
 			mbJson.put("model", computerSystem.getModel());
 			motherboardJson.set("motherboard", mbJson);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 
 		return motherboardJson;
@@ -159,7 +154,7 @@ public class HWSpec implements LayerRequirements {
 
 			cpuInfoJson.set("cpu", cpuJson);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 
 		return cpuInfoJson;
@@ -184,7 +179,7 @@ public class HWSpec implements LayerRequirements {
 				cacheJson.put("l3", "");
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 
 		return cacheJson;
@@ -206,7 +201,7 @@ public class HWSpec implements LayerRequirements {
 
 			memoryInfoJson.set("memory", memoryJson);
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 
 		return memoryInfoJson;
@@ -247,7 +242,7 @@ public class HWSpec implements LayerRequirements {
 				pciJson.putPOJO("pciDevices", pciDevices);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 		return pciJson;
 	}
@@ -302,7 +297,7 @@ public class HWSpec implements LayerRequirements {
 			gpuInfoJson.set("gpu", gpuNode);
 			
 		} catch(Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect HWSpec data", e);
 		}
 		return gpuInfoJson;
 	}

@@ -13,12 +13,6 @@ public class OSSpec implements LayerRequirements {
 	// For any new changes each time load data is called
 	private String data = "";
 
-	// Constructor for OSSpec that runs loadData
-	OSSpec(){
-		loadData();
-		System.out.println("OS Loaded");
-	}
-
 	// Gets all the data you will be needing. This is basically your main
 	public void loadData() {
 		ObjectNode osJson = getOSJson();
@@ -80,7 +74,7 @@ public class OSSpec implements LayerRequirements {
 			osJson.put("domainName", networkParams.getDomainName());
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Unable to collect OSSpec data", e);
 		}
 
 		return osJson;

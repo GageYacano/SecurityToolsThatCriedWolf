@@ -1,8 +1,4 @@
 package com.seniordesign;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -10,7 +6,6 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class FWSpec implements LayerRequirements{
@@ -38,17 +33,9 @@ public class FWSpec implements LayerRequirements{
 	public FWSpec() {
 		ObjectMapper mapper = new ObjectMapper();
 		wrappedObject = mapper.createObjectNode();
-		loadData();
-		System.out.println("FWSpec Loaded");
+
 	}
 
-	private static void writeJsonFile(String filename, ArrayList<FirmwareRecord> object) throws IOException {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.enable(SerializationFeature.INDENT_OUTPUT);
-
-		String json = String.format("{\n\"firmware\" : { %s \n}", mapper.writeValueAsString(object));
-		Files.writeString(Paths.get(String.format("%s%s", filename, ".json")), json, StandardCharsets.UTF_8);
-	}
 
 	@SuppressWarnings("unchecked")
 	public Process CollectFirmwareInfo() {
@@ -85,12 +72,12 @@ public class FWSpec implements LayerRequirements{
 				"SPUSBHostDataType",
 				"SPParallelATADataType"		
 			);
+			pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 			Process process = pb.start();
 			return process;
 		} catch (Exception e) {
 			// Handle exception
-			e.printStackTrace();
-			return null;
+			throw new IllegalStateException("Unable to collect FWSpec data", e);
 		}
 	}
 
@@ -142,10 +129,10 @@ public class FWSpec implements LayerRequirements{
 					FirmwareRecord record = new FirmwareRecord(thisDeviceName, key, value.asText());
 					records.add(record);
 					/*
-					System.out.println("Device: " + thisDeviceName);
-                    System.out.println("Firmware Key: " + key);
-                    System.out.println("Firmware Version: " + value.asText());
-                    System.out.println();
+					System.err.println("Device: " + thisDeviceName);
+                    System.err.println("Firmware Key: " + key);
+                    System.err.println("Firmware Version: " + value.asText());
+                    System.err.println();
 					*/
                 }
                 // Recurse using updated name
@@ -162,20 +149,24 @@ public class FWSpec implements LayerRequirements{
     // Gets all the data you will be needing. This is basically your main
     public void loadData() {
 
+        records.clear();
         Process process = CollectFirmwareInfo();
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            process.waitFor();
-
-            JsonNode root = mapper.readTree(process.getInputStream());
+            JsonNode root;
+            try (var input = process.getInputStream()) {
+                root = mapper.readTree(input);
+            }
+            if (process.waitFor() != 0 || root == null) {
+                throw new IllegalStateException("Firmware command failed or returned no data");
+            }
 			wrappedObject.set("firmware", root);
 
-			// Extract Firmware preps root to be printed to the file
+			// Keep extracted records available without writing a separate file
 			extractFirmware(root, null);
-			writeJsonFile("firmware", records);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IllegalStateException("Unable to collect FWSpec data", e);
         }
     }
 
