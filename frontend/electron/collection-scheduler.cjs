@@ -4,7 +4,7 @@ const { execFile } = require("node:child_process");
 const { promisify } = require("node:util");
 const execute = promisify(execFile);
 const PRESETS = [1, 15, 30, 60, 360, 1440];
-const DEFAULTS = { automaticCollection: false, collectionIntervalMinutes: 60 };
+const DEFAULTS = { automaticCollection: false, collectionIntervalMinutes: 60, darkMode: false };
 
 function validSettings(value) {
   return value && typeof value.automaticCollection === "boolean" &&
@@ -53,7 +53,8 @@ module.exports = function createScheduler({ app, snapshotPath, resolveJarPath })
     if (raw === null) return { ...DEFAULTS };
     const value = JSON.parse(raw);
     if (!validSettings(value)) throw new Error("Saved collection settings are invalid. Choose settings and Save to replace them.");
-    return { automaticCollection: value.automaticCollection, collectionIntervalMinutes: value.collectionIntervalMinutes };
+    return { automaticCollection: value.automaticCollection, collectionIntervalMinutes: value.collectionIntervalMinutes,
+      darkMode: typeof value.darkMode === "boolean" ? value.darkMode : false };
   }
 
   async function registered() {
@@ -173,6 +174,13 @@ module.exports = function createScheduler({ app, snapshotPath, resolveJarPath })
   }
 
   return {
+    getTheme: () => serial(async () => ({ darkMode: (await preferences()).darkMode })),
+    saveTheme: (darkMode) => serial(async () => {
+      if (typeof darkMode !== "boolean") throw new Error("Dark mode must be a boolean.");
+      const settings = { ...await preferences(), darkMode };
+      await writeAtomic(settingsPath(), JSON.stringify(settings, null, 2) + "\n");
+      return { darkMode };
+    }),
     getSettings: () => serial(view),
     saveSettings: (value) => serial(async () => {
       lastError = null;
@@ -182,7 +190,8 @@ module.exports = function createScheduler({ app, snapshotPath, resolveJarPath })
         let previous = { ...DEFAULTS };
         try { previous = await preferences(); } catch { /* Explicit Save can replace malformed preferences. */ }
         const wasRegistered = await registered();
-        const settings = { automaticCollection: value.automaticCollection, collectionIntervalMinutes: value.collectionIntervalMinutes };
+        const settings = { automaticCollection: value.automaticCollection, collectionIntervalMinutes: value.collectionIntervalMinutes,
+          darkMode: previous.darkMode };
         await writeAtomic(settingsPath(), JSON.stringify(settings, null, 2) + "\n");
         await reconcile(settings, settings.automaticCollection && (!previous.automaticCollection || !wasRegistered));
       } catch (error) { lastError = `Unable to apply automatic collection: ${error.stderr || error.message}`; }

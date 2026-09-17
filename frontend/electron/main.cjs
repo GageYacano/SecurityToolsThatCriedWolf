@@ -133,6 +133,8 @@ function stopCollection() {
 const scheduler = require("./collection-scheduler.cjs")({ app, snapshotPath, resolveJarPath });
 
 app.whenReady().then(() => {
+  ipcMain.handle("onion-manager:get-theme", () => scheduler.getTheme());
+  ipcMain.handle("onion-manager:save-theme", (_event, darkMode) => scheduler.saveTheme(darkMode));
   ipcMain.handle("onion-manager:run", runOnionManager);
   ipcMain.handle("onion-manager:read-snapshot", readSnapshot);
   ipcMain.handle("onion-manager:get-collection-settings", () => scheduler.getSettings());

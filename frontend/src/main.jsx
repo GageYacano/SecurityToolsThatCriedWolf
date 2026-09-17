@@ -1,11 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Alert, Box, IconButton, ThemeProvider, Typography, createTheme } from "@mui/material";
 import OnionS from "./components/OnionS";
 import SettingsPopup from "./components/SettingsPopup";
 import Vulnerabilities from "./components/Vulnerabilities";
-import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
-import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 import NotificationProvider, { useNotifications } from "./notifications/NotificationProvider";
 import NotificationsPopup from "./components/NotificationsPopup";
 import "./styles.css";
@@ -85,8 +85,31 @@ function createAppTheme(isDarkMode) {
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [themeBusy, setThemeBusy] = useState(true);
+  const [themeError, setThemeError] = useState(null);
   const { collectionWarning, storageWarning } = useNotifications();
   const theme = useMemo(() => createAppTheme(isDarkMode), [isDarkMode]);
+
+  useEffect(() => {
+    let active = true;
+    window.onionManager.getTheme().then((result) => {
+      if (active) setIsDarkMode(result.darkMode);
+    }).catch((error) => {
+      if (active) setThemeError(`Unable to load theme preference: ${error.message}`);
+    }).finally(() => { if (active) setThemeBusy(false); });
+    return () => { active = false; };
+  }, []);
+
+  async function toggleTheme() {
+    if (themeBusy) return;
+    const next = !isDarkMode;
+    setThemeBusy(true);
+    setThemeError(null);
+    setIsDarkMode(next);
+    try { await window.onionManager.saveTheme(next); }
+    catch (error) { setThemeError(`Theme changed for this session, but could not be saved: ${error.message}`); }
+    finally { setThemeBusy(false); }
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -105,18 +128,20 @@ function App() {
               <SettingsPopup />
               <IconButton
                 className="theme-toggle"
-                onClick={() => setIsDarkMode((current) => !current)}
+                onClick={toggleTheme}
+                disabled={themeBusy}
                 aria-pressed={isDarkMode}
                 aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
                 title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
               >
-                {isDarkMode ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
+                {isDarkMode ? <LightModeIcon /> : <DarkModeIcon />}
               </IconButton>
               <NotificationsPopup />
             </Box>
           </header>
           {collectionWarning && <Alert severity="warning" sx={{ mb: 2 }}>{collectionWarning}</Alert>}
           {storageWarning && <Alert severity="warning" sx={{ mb: 2 }}>{storageWarning}</Alert>}
+          {themeError && <Alert severity="warning" sx={{ mb: 2 }}>{themeError}</Alert>}
           <OnionS />
           <Vulnerabilities />
         </Box>

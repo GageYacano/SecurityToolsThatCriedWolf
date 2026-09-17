@@ -171,6 +171,9 @@ runs share the backend file lock, so a busy scheduled attempt is skipped.
 
 Preferences are stored in `settings.json` in the `OnionManager` application-data
 directory (one level above `snapshots`). Development uses `OnionManager-dev`.
+The theme toggle saves a `darkMode` boolean in this file immediately and restores
+it on startup. Existing files without this field default to light mode. Theme
+changes preserve collection settings and do not reload the background job.
 Java is resolved from a compatible `JAVA_HOME` or macOS's `java_home` utility;
 Java 17 or newer is required. Scheduled stderr is appended to
 `collection-scheduler.log` alongside settings. This version does not rotate logs.

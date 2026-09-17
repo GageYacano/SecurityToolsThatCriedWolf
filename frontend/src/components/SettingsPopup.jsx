@@ -1,9 +1,10 @@
 import React, { useRef, useState } from "react";
 import {
-  Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControlLabel, IconButton, MenuItem, Switch, TextField, Typography,
+  Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
+  FormControlLabel, IconButton, MenuItem, Switch, TextField, Tooltip, Typography,
 } from "@mui/material";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutlineOutlined";
 
 import { useNotifications } from "../notifications/NotificationProvider";
 
@@ -79,25 +80,28 @@ export default function SettingsPopup() {
       <Dialog open={isOpen} onClose={close} aria-labelledby="settings-dialog-title" fullWidth maxWidth="sm">
         <DialogTitle id="settings-dialog-title">Settings</DialogTitle>
         <DialogContent dividers>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>
-            Automatic collection continues after quitting OnionManager while you are logged in.
-            Enabling it collects immediately. Missed collections during sleep are not replayed.
-          </Typography>
           {state?.development && <Alert severity="info" sx={{ mb: 2 }}>
             This development schedule is separate from the installed app and continues after development exits. Disable it here when finished testing.
           </Alert>}
-          <FormControlLabel label="Automatic collection" control={
-            <Switch checked={settings.automaticCollection} disabled={busy || !state?.supported}
-              onChange={(_event, checked) => setSettings((current) => ({ ...current, automaticCollection: checked }))} />
-          } />
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <FormControlLabel label="Automatic collection" sx={{ mr: 0.5 }} control={
+              <Switch checked={settings.automaticCollection} disabled={busy || !state?.supported}
+                onChange={(_event, checked) => setSettings((current) => ({ ...current, automaticCollection: checked }))} />
+            } />
+            <Tooltip arrow describeChild title="Automatic collection continues after quitting OnionManager while you are logged in. Enabling it collects immediately. Missed collections during sleep are not replayed.">
+              <IconButton size="small" aria-label="About automatic collection" sx={{ color: "text.secondary" }}>
+                <HelpOutlineIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
           <TextField select label="Collection interval" fullWidth margin="normal" size="small"
             value={settings.collectionIntervalMinutes} disabled={busy || !state?.supported || !settings.automaticCollection}
             onChange={(event) => setSettings((current) => ({ ...current, collectionIntervalMinutes: Number(event.target.value) }))}>
             {INTERVALS.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
           </TextField>
-          <Typography role="status" color="text.secondary" sx={{ mt: 2 }}>
-            {busy ? "Applying or loading settings..." : statusText[state?.status]}
-          </Typography>
+          {/*<Typography role="status" color="text.secondary" sx={{ mt: 2 }}>*/}
+          {/*  {busy ? "Applying or loading settings..." : statusText[state?.status]}*/}
+          {/*</Typography>*/}
           {state?.healthWarning && <Alert severity="warning" sx={{ mt: 2 }}>{state.healthWarning}</Alert>}
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>

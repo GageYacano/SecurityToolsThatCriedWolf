@@ -103,35 +103,30 @@ button {
   margin-top: 12px !important;
 }
 
-.theme-toggle {
-  border: 1px solid #b9bec6 !important;
-  border-radius: 6px !important;
-  color: #363c47 !important;
-  background: #ffffff !important;
-  margin-top: 4px !important;
-}
-
+.theme-toggle,
 .settings-toggle,
 .notifications-toggle {
+  width: 42px;
+  height: 42px;
+  padding: 8px !important;
+  flex-shrink: 0;
   border: 1px solid #b9bec6 !important;
   border-radius: 6px !important;
   color: #363c47 !important;
   background: #ffffff !important;
 }
 
+.theme-toggle:hover,
 .settings-toggle:hover,
 .notifications-toggle:hover {
   border-color: #777e89 !important;
   background: #f0f1f3 !important;
 }
 
-.theme-toggle:hover {
-  border-color: #777e89 !important;
-  background: #f0f1f3 !important;
-}
-
-.theme-toggle .MuiSvgIcon-root {
-  font-size: 1.35rem;
+.header-actions .MuiSvgIcon-root {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
 }
 
 .dark-mode {
@@ -175,12 +170,7 @@ button {
   color: #d1d6dc;
 }
 
-.dark-mode .theme-toggle {
-  border-color: #656d78 !important;
-  color: #edf0f2 !important;
-  background: #292d33 !important;
-}
-
+.dark-mode .theme-toggle,
 .dark-mode .settings-toggle,
 .dark-mode .notifications-toggle {
   border-color: #656d78 !important;
@@ -188,13 +178,9 @@ button {
   background: #292d33 !important;
 }
 
+.dark-mode .theme-toggle:hover,
 .dark-mode .settings-toggle:hover,
 .dark-mode .notifications-toggle:hover {
-  border-color: #9aa2ad !important;
-  background: #353b43 !important;
-}
-
-.dark-mode .theme-toggle:hover {
   border-color: #9aa2ad !important;
   background: #353b43 !important;
 }
@@ -446,11 +432,6 @@ button {
     width: 100%;
   }
 
-  .theme-toggle,
-  .settings-toggle,
-  .notifications-toggle {
-    margin-top: 0 !important;
-  }
 }
 
 .visually-hidden {
