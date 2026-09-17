@@ -3,7 +3,11 @@ import { Box, Stack, Typography } from "@mui/material";
 import ActionButton from "./ActionButton";
 import LayerAccordionTable from "./LayerAccordionTable";
 
+import { useNotifications } from "../notifications/NotificationProvider";
+import { collectionNotification } from "../notifications/history.mjs";
+
 export default function OnionS() {
+  const { addNotification, reportWarning } = useNotifications();
   const [snapshot, setSnapshot] = useState(null);
   const [status, setStatus] = useState("Loading saved configuration...");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +28,7 @@ export default function OnionS() {
           if (savedTimestampRef.current !== result.snapshot.collectedAt) {
             savedTimestampRef.current = result.snapshot.collectedAt;
             setSnapshot(result.snapshot);
+            addNotification(collectionNotification(result.snapshot));
             setStatus("Saved configuration loaded.");
           }
         } else if (result.status === "error") {
@@ -50,7 +55,7 @@ export default function OnionS() {
       document.removeEventListener("visibilitychange", loadSaved);
       window.removeEventListener("focus", loadSaved);
     };
-  }, []);
+  }, [addNotification]);
 
   async function runOnionManager() {
     if (collectingRef.current) return;
@@ -64,13 +69,18 @@ export default function OnionS() {
       if (result.status === "success") {
         savedTimestampRef.current = result.snapshot.collectedAt;
         setSnapshot(result.snapshot);
+        addNotification(collectionNotification(result.snapshot));
         const partial = Object.values(result.snapshot.config).some((layer) => layer?.error);
         setStatus(partial ? "Configuration saved. Some layers could not be collected; see their details." : "Configuration saved.");
       } else {
         setStatus(result.message);
+        reportWarning("collection", result.message);
       }
     } catch (error) {
-      if (request === requestRef.current) setStatus(`Unable to collect configuration: ${error.message}`);
+      if (request === requestRef.current) {
+        setStatus(`Unable to collect configuration: ${error.message}`);
+        reportWarning("collection", `Unable to collect configuration: ${error.message}`);
+      }
     } finally {
       collectingRef.current = false;
       if (request === requestRef.current) setIsLoading(false);

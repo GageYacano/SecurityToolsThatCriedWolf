@@ -129,6 +129,28 @@ Node.js, npm, and Maven are build prerequisites, not recipient prerequisites.
 
 ## Automatic collection (macOS)
 
+### Notifications
+
+The bell in the header opens a history of configuration collections, partial
+results, failed manual attempts, settings errors, and scheduler health warnings.
+The badge counts unread messages; opening the dialog marks them read without
+clearing active warnings on the main screen. Dates use local time in
+`HH:mm:ss on DD/MM/YYYY` format.
+
+The latest 200 observed messages and their read state persist in local browser
+storage. Development and packaged origins have separate histories. Repeated
+polls do not duplicate a collection or an unchanged scheduler warning. If a
+problem resolves and later recurs, it produces a new warning.
+
+History records events observed by the open app. Reopening can report the latest
+snapshot and current scheduler problems, but cannot reconstruct every background
+run while the app was closed. Vulnerability findings will be connected when
+vulnerability scanning is implemented. No operating-system notifications are sent.
+
+Run notification history tests with `npm test` from `frontend/`.
+
+### Settings and behavior
+
 Open Settings, enable **Automatic collection**, select an interval, and click
 **Save**. It defaults to disabled with a one-hour interval. Available intervals
 are 1 minute, 15 minutes, 30 minutes, 1 hour, 6 hours, and 24 hours. Cancel discards unsaved

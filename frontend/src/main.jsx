@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Box, IconButton, ThemeProvider, Typography, createTheme } from "@mui/material";
+import { Alert, Box, IconButton, ThemeProvider, Typography, createTheme } from "@mui/material";
 import OnionS from "./components/OnionS";
 import SettingsPopup from "./components/SettingsPopup";
 import Vulnerabilities from "./components/Vulnerabilities";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import NotificationProvider, { useNotifications } from "./notifications/NotificationProvider";
+import NotificationsPopup from "./components/NotificationsPopup";
 import "./styles.css";
 
 function createAppTheme(isDarkMode) {
@@ -83,6 +85,7 @@ function createAppTheme(isDarkMode) {
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { collectionWarning, storageWarning } = useNotifications();
   const theme = useMemo(() => createAppTheme(isDarkMode), [isDarkMode]);
 
   return (
@@ -109,8 +112,11 @@ function App() {
               >
                 {isDarkMode ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
               </IconButton>
+              <NotificationsPopup />
             </Box>
           </header>
+          {collectionWarning && <Alert severity="warning" sx={{ mb: 2 }}>{collectionWarning}</Alert>}
+          {storageWarning && <Alert severity="warning" sx={{ mb: 2 }}>{storageWarning}</Alert>}
           <OnionS />
           <Vulnerabilities />
         </Box>
@@ -121,6 +127,6 @@ function App() {
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <NotificationProvider><App /></NotificationProvider>
   </React.StrictMode>,
 );

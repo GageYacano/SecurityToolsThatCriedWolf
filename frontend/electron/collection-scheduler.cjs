@@ -143,7 +143,33 @@ module.exports = function createScheduler({ app, snapshotPath, resolveJarPath })
         else if (await registered()) status = "active";
       } catch (failure) { error = `Unable to inspect automatic collection: ${failure.stderr || failure.message}`; status = "unknown"; }
     }
-    return { settings, status, error, supported, development: !app.isPackaged };
+    let healthWarning = null;
+    if (supported && settings.automaticCollection) {
+      if (status === "inactive") healthWarning = "Automatic collection is enabled, but its background job is missing. Open Settings and Save to repair it.";
+      if (status === "blocked") healthWarning = "macOS has disabled automatic collection. Check Login Items & Extensions in System Settings.";
+      if (status === "unknown") healthWarning = "Automatic collection could not be checked. Open Settings for details.";
+      if (status === "active") {
+        try {
+          const { stdout } = await launchctl("print", service);
+          const exit = stdout.match(/last exit code = (-?\d+)/);
+          // Exit 2 means another collector held the snapshot lock.
+          if (exit && ![0, 2].includes(Number(exit[1]))) {
+            healthWarning = `The last automatic collection failed (exit code ${exit[1]}). Try Get OnionS to check collection, then retry Save in Settings.`;
+          }
+          const raw = await readOptional(snapshotPath());
+          const collectedAt = raw === null ? NaN : Date.parse(JSON.parse(raw).collectedAt);
+          const overdueAfter = (settings.collectionIntervalMinutes * 2 + 5) * 60000;
+          if (!healthWarning && !Number.isFinite(collectedAt)) {
+            healthWarning = "Automatic collection has no dated saved configuration yet. If you just enabled it, allow time for the first collection to finish.";
+          } else if (!healthWarning && Date.now() - collectedAt > overdueAfter) {
+            healthWarning = "The saved configuration is overdue for an update. Sleep can delay collection; if it stays overdue while awake, try Get OnionS and check Settings.";
+          }
+        } catch (failure) {
+          healthWarning = `Unable to verify automatic collection: ${failure.message}`;
+        }
+      }
+    }
+    return { settings, status, error, healthWarning, supported, development: !app.isPackaged };
   }
 
   return {

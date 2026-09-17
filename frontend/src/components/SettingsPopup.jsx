@@ -5,10 +5,13 @@ import {
 } from "@mui/material";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 
+import { useNotifications } from "../notifications/NotificationProvider";
+
 const INTERVALS = [[1, "1 minute"], [15, "15 minutes"], [30, "30 minutes"], [60, "1 hour"], [360, "6 hours"], [1440, "24 hours"]];
 const DEFAULTS = { automaticCollection: false, collectionIntervalMinutes: 60 };
 
 export default function SettingsPopup() {
+  const { reportHealth, reportWarning } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [settings, setSettings] = useState(DEFAULTS);
@@ -28,8 +31,12 @@ export default function SettingsPopup() {
       setSettings(result.settings);
       setState(result);
       setError(result.error);
+      reportHealth(result.error || result.healthWarning || null);
     } catch (failure) {
-      if (request === requestRef.current) setError(failure.message);
+      if (request === requestRef.current) {
+        setError(failure.message);
+        reportWarning("settings", `Unable to load collection settings: ${failure.message}`);
+      }
     } finally {
       if (request === requestRef.current) setBusy(false);
     }
@@ -49,8 +56,10 @@ export default function SettingsPopup() {
       setState(result);
       setSettings(result.settings);
       setError(result.error);
+      reportHealth(result.error || result.healthWarning || null);
     } catch (failure) {
       setError(failure.message);
+      reportWarning("settings", `Unable to save collection settings: ${failure.message}`);
     } finally { setBusy(false); }
   }
 
@@ -86,9 +95,10 @@ export default function SettingsPopup() {
             onChange={(event) => setSettings((current) => ({ ...current, collectionIntervalMinutes: Number(event.target.value) }))}>
             {INTERVALS.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}
           </TextField>
-          {/*<Typography role="status" color="text.secondary" sx={{ mt: 2 }}>*/}
-          {/*  {busy ? "Applying or loading settings..." : statusText[state?.status]}*/}
-          {/*</Typography>*/}
+          <Typography role="status" color="text.secondary" sx={{ mt: 2 }}>
+            {busy ? "Applying or loading settings..." : statusText[state?.status]}
+          </Typography>
+          {state?.healthWarning && <Alert severity="warning" sx={{ mt: 2 }}>{state.healthWarning}</Alert>}
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
