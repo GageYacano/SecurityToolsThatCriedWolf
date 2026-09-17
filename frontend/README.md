@@ -106,7 +106,7 @@ continues to print configuration JSON to stdout. Diagnostics go to stderr.
 Closing the window or quitting Electron terminates its manual Java collection.
 A snapshot already saved remains valid; interrupted writes cannot expose a
 partially written JSON file. Direct CLI runs are independent of Electron.
-There is no automatic scheduling in this version.
+Automatic collection can be enabled in Settings on macOS; see below.
 
 ## Platform coverage
 
@@ -126,3 +126,73 @@ Node.js, npm, and Maven are build prerequisites, not recipient prerequisites.
 - Check missing/invalid snapshots and an output path containing spaces.
 - Verify installed builds on each target platform; building on macOS alone does
   not verify Windows or Linux behavior.
+
+## Automatic collection (macOS)
+
+Open Settings, enable **Automatic collection**, select an interval, and click
+**Save**. It defaults to disabled with a one-hour interval. Available intervals
+are 1 minute, 15 minutes, 30 minutes, 1 hour, 6 hours, and 24 hours. Cancel discards unsaved
+changes; Save applies them immediately while leaving the dialog open to show
+registration status or an error.
+
+Enabling registers a per-user macOS LaunchAgent and requests an immediate run.
+Later runs use the selected interval. Changing the interval does not request an
+immediate run. Registration does not mean the first collection has finished:
+check the snapshot's **Last collected** timestamp. The visible window checks
+for saved changes every 30 seconds, as well as on startup and focus.
+
+The job continues after Electron quits while you remain logged in. It does not
+wake the Mac or replay missed intervals. Disabling unloads the job and removes
+its plist. Disabling or changing intervals may stop a current scheduled run;
+the existing atomic snapshot write protects saved data. Manual and scheduled
+runs share the backend file lock, so a busy scheduled attempt is skipped.
+
+Preferences are stored in `settings.json` in the `OnionManager` application-data
+directory (one level above `snapshots`). Development uses `OnionManager-dev`.
+Java is resolved from a compatible `JAVA_HOME` or macOS's `java_home` utility;
+Java 17 or newer is required. Scheduled stderr is appended to
+`collection-scheduler.log` alongside settings. This version does not rotate logs.
+
+LaunchAgent files:
+
+- Installed: `~/Library/LaunchAgents/com.seniordesign.onionmanager.collection.plist`
+- Development: `~/Library/LaunchAgents/com.seniordesign.onionmanager.collection.dev.plist`
+
+Development scheduling persists after `npm run dev` exits. Disable it in the
+development Settings dialog when finished. Its settings, job, logs, and snapshots
+are independent of the installed app.
+
+Startup repairs missing or outdated registrations based on saved preferences,
+including paths changed by moving the app. Reopen the installed app after moving
+it. System-disabled background execution is reported instead of overridden;
+check macOS System Settings, Login Items & Extensions, and retry Save. Settings
+can be saved even if registration fails, so always check the displayed status.
+Malformed settings produce an error; an explicit Save replaces them.
+
+Disable automatic collection before deleting the app. If it has already been
+removed, unload its orphaned job and remove its plist manually:
+
+```bash
+launchctl bootout "gui/$(id -u)/com.seniordesign.onionmanager.collection"
+rm "$HOME/Library/LaunchAgents/com.seniordesign.onionmanager.collection.plist"
+```
+
+For a development job, append `.dev` to the label and filename. A missing-job
+error from `bootout` means it is already unloaded; the plist can still be removed.
+Keep your settings and snapshots unless you also want to discard saved data.
+
+Windows and Linux scheduling are not implemented yet. No schedule is registered
+by `npm run build` or `npm run dist`.
+
+### Manual scheduling checks
+
+- Verify disabled defaults and settings persistence; Cancel should not apply edits.
+- Enable and verify an immediate snapshot update, then quit and wait for another.
+- Change the interval and check that no extra immediate run starts.
+- Disable during collection and verify the job is removed and the snapshot remains valid.
+- Overlap a manual collection with the scheduled job and confirm only one proceeds.
+- Leave the window visible and confirm new snapshots appear without switching windows.
+- Check login/restart, sleep/wake, missing Java/JAR, moved paths, malformed settings,
+  registration failures, and a job disabled through macOS.
+- Verify development and installed jobs separately, and disable development
+  scheduling after testing. Verify the installed build, not just development.

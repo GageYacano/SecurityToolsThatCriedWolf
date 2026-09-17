@@ -130,9 +130,14 @@ function stopCollection() {
   onionManagerProcess?.kill();
 }
 
+const scheduler = require("./collection-scheduler.cjs")({ app, snapshotPath, resolveJarPath });
+
 app.whenReady().then(() => {
   ipcMain.handle("onion-manager:run", runOnionManager);
   ipcMain.handle("onion-manager:read-snapshot", readSnapshot);
+  ipcMain.handle("onion-manager:get-collection-settings", () => scheduler.getSettings());
+  ipcMain.handle("onion-manager:save-collection-settings", (_event, settings) => scheduler.saveSettings(settings));
+  scheduler.initialize().catch((error) => console.error("Scheduler initialization failed:", error));
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

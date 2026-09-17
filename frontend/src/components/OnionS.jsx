@@ -9,17 +9,23 @@ export default function OnionS() {
   const [isLoading, setIsLoading] = useState(false);
   const requestRef = useRef(0);
   const collectingRef = useRef(false);
+  const savedTimestampRef = useRef(null);
+  const readingRef = useRef(false);
 
   useEffect(() => {
     async function loadSaved() {
-      if (collectingRef.current) return;
+      if (collectingRef.current || readingRef.current || document.visibilityState === "hidden") return;
+      readingRef.current = true;
       const request = ++requestRef.current;
       try {
         const result = await window.onionManager.readSnapshot();
         if (request !== requestRef.current) return;
         if (result.status === "found") {
-          setSnapshot(result.snapshot);
-          setStatus("Saved configuration loaded.");
+          if (savedTimestampRef.current !== result.snapshot.collectedAt) {
+            savedTimestampRef.current = result.snapshot.collectedAt;
+            setSnapshot(result.snapshot);
+            setStatus("Saved configuration loaded.");
+          }
         } else if (result.status === "error") {
           setStatus(result.message);
         } else {
@@ -27,12 +33,21 @@ export default function OnionS() {
         }
       } catch (error) {
         if (request === requestRef.current) setStatus(`Unable to load saved configuration: ${error.message}`);
+      } finally {
+        readingRef.current = false;
       }
     }
-    loadSaved();
+    // A microtask lets React StrictMode finish its initial effect cleanup first.
+    let active = true;
+    Promise.resolve().then(() => { if (active) loadSaved(); });
+    const interval = window.setInterval(loadSaved, 30000);
     window.addEventListener("focus", loadSaved);
+    document.addEventListener("visibilitychange", loadSaved);
     return () => {
+      active = false;
       ++requestRef.current;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", loadSaved);
       window.removeEventListener("focus", loadSaved);
     };
   }, []);
@@ -47,6 +62,7 @@ export default function OnionS() {
       const result = await window.onionManager.run();
       if (request !== requestRef.current) return;
       if (result.status === "success") {
+        savedTimestampRef.current = result.snapshot.collectedAt;
         setSnapshot(result.snapshot);
         const partial = Object.values(result.snapshot.config).some((layer) => layer?.error);
         setStatus(partial ? "Configuration saved. Some layers could not be collected; see their details." : "Configuration saved.");
@@ -83,7 +99,7 @@ export default function OnionS() {
             Get OnionS
           </ActionButton>
         </Stack>
-        <Typography className="section-status" role="status">{status}</Typography>
+        {/*<Typography className="section-status" role="status">{status}</Typography>*/}
       </Box>
     </section>
   );
