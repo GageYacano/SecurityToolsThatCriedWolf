@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.io.File;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -43,7 +44,27 @@ public class Libs implements LayerRequirements{
         ArrayNode libs = mapper.createArrayNode();
         String libraryError = null;
         
-        if(os.toLowerCase(java.util.Locale.ROOT).contains("mac")){
+        if(os.toLowerCase(java.util.Locale.ROOT).contains("win")){
+            try {
+                Process process = new ProcessBuilder("powershell.exe", "-NoProfile", "-Command",
+                        "Get-Package | Select-Object Name,Version | ConvertTo-Json -Compress").start();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        JsonNode packageNode = mapper.readTree(line);
+                        if (packageNode.isArray()) {
+                            for (JsonNode item : packageNode) addPackage(libs, item);
+                        } else if (packageNode.isObject()) {
+                            addPackage(libs, packageNode);
+                        }
+                    }
+                }
+                if (process.waitFor() != 0) libraryError = "Windows package collection failed.";
+            } catch (IOException | InterruptedException e) {
+                libraryError = "Unable to collect Windows packages: " + e.getMessage();
+                if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            }
+        } else if(os.toLowerCase(java.util.Locale.ROOT).contains("mac")){
             Process process;
             try {
                 ProcessBuilder builder = new ProcessBuilder(resolveBrew(), "list", "--versions");
@@ -92,6 +113,13 @@ public class Libs implements LayerRequirements{
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Unable to serialize library data", ex);
         }
+    }
+
+    private static void addPackage(ArrayNode libraries, com.fasterxml.jackson.databind.JsonNode item) {
+        ObjectNode packageNode = new ObjectMapper().createObjectNode();
+        packageNode.put("name", item.path("Name").asText());
+        packageNode.put("version", item.path("Version").asText());
+        libraries.add(packageNode);
     }
 
     // Does checks and then returns info

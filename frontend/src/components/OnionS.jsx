@@ -69,6 +69,7 @@ export default function OnionS() {
       if (result.status === "success") {
         savedTimestampRef.current = result.snapshot.collectedAt;
         setSnapshot(result.snapshot);
+        window.dispatchEvent(new CustomEvent("onionmanager:configuration-collected", { detail: result.snapshot.config }));
         addNotification(collectionNotification(result.snapshot));
         const partial = Object.values(result.snapshot.config).some((layer) => layer?.error);
         setStatus(partial ? "Configuration saved. Some layers could not be collected; see their details." : "Configuration saved.");

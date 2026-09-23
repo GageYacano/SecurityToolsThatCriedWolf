@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("onionManager", {
   saveTheme: (darkMode) => ipcRenderer.invoke("onion-manager:save-theme", darkMode),
   getCollectionSettings: () => ipcRenderer.invoke("onion-manager:get-collection-settings"),
   saveCollectionSettings: (settings) => ipcRenderer.invoke("onion-manager:save-collection-settings", settings),
+  scanVulnerabilities: (config) => ipcRenderer.invoke("onion-manager:scan-vulnerabilities", config),
   readSnapshot: () => ipcRenderer.invoke("onion-manager:read-snapshot"),
   run: () => ipcRenderer.invoke("onion-manager:run"),
   onOutput: (callback) => {

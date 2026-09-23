@@ -40,6 +40,10 @@ public class FWSpec implements LayerRequirements{
 	@SuppressWarnings("unchecked")
 	public Process CollectFirmwareInfo() {
 		try {
+			if (System.getProperty("os.name").toLowerCase().contains("win")) {
+				return new ProcessBuilder("powershell.exe", "-NoProfile", "-Command",
+					"Get-CimInstance Win32_BIOS | Select-Object Manufacturer,SMBIOSBIOSVersion,ReleaseDate | ConvertTo-Json -Compress").start();
+			}
 			ProcessBuilder pb = new ProcessBuilder("system_profiler",  "-json", "-detailLevel", "full",
 				"SPSoftwareDataType",
 				"SPiBootDataType",

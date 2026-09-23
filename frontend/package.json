@@ -9,6 +9,7 @@
     "test": "node --test src/notifications/history.test.mjs electron/theme-settings.test.cjs",
     "dev": "npm run build:backend && concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron electron/main.cjs --dev\"",
     "build:backend": "node scripts/build-backend.cjs",
+    "seed:cves": "node scripts/seed-cves.cjs",
     "build": "npm run build:backend && vite build",
     "start": "electron electron/main.cjs",
     "dist": "npm run build && electron-builder"
@@ -18,6 +19,7 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.4.0",
+    "mongodb": "^6.21.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },

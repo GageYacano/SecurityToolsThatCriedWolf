@@ -1,0 +1,22 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: onionmanager-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-onionadmin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-change-this-password}
+      MONGO_INITDB_DATABASE: onionmanager
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - onionmanager-mongo-data:/data/db
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --username $$MONGO_INITDB_ROOT_USERNAME --password $$MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  onionmanager-mongo-data:

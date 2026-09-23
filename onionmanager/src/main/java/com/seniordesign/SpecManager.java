@@ -14,7 +14,7 @@ public class SpecManager {
         addLayer(config, "hardware", HWSpec::new);
         addLayer(config, "os", OSSpec::new);
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-        if (os.contains("mac")) {
+        if (os.contains("mac") || os.contains("win")) {
             addLayer(config, "firmware", FWSpec::new);
             addLayer(config, "libraries", Libs::new);
             addLayer(config, "applications", Apps::new);

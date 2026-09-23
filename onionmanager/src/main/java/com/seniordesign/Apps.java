@@ -19,13 +19,13 @@ public class Apps implements LayerRequirements {
 		ObjectMapper mapper = new ObjectMapper();
 
 		try {
-			ProcessBuilder pb = new ProcessBuilder(
-				"system_profiler",
-				"SPApplicationsDataType",
-				"-detailLevel",
-				"mini",
-				"-json"
-			);
+			ProcessBuilder pb;
+			if (System.getProperty("os.name").toLowerCase().contains("win")) {
+				pb = new ProcessBuilder("powershell.exe", "-NoProfile", "-Command",
+					"$packages=@{}; Get-Package | ForEach-Object { if ($_.Name -and $_.Version) {$packages[$_.Name.ToLowerInvariant()] = [string]$_.Version} }; @(@(Get-StartApps) | ForEach-Object { $name=$_.Name; $version=$packages[$name.ToLowerInvariant()]; if ([string]::IsNullOrWhiteSpace($version)) {$version='unknown'}; [PSCustomObject]@{Name=$name; AppID=$_.AppID; Version=$version} }) | ConvertTo-Json -Compress");
+			} else {
+				pb = new ProcessBuilder("system_profiler", "SPApplicationsDataType", "-detailLevel", "mini", "-json");
+			}
 			pb.redirectError(ProcessBuilder.Redirect.INHERIT);
 			Process process = pb.start();
 
@@ -39,16 +39,19 @@ public class Apps implements LayerRequirements {
 			if (process.waitFor() != 0) throw new IOException("Application command failed");
 
 			JsonNode root = mapper.readTree(myData.toString());
-			JsonNode appList = root.path("SPApplicationsDataType");
+			JsonNode appList = System.getProperty("os.name").toLowerCase().contains("win")
+					? (root.isArray() ? root : mapper.createArrayNode())
+					: root.path("SPApplicationsDataType");
 			if (!appList.isArray()) throw new IOException("Application command returned invalid data");
 			ArrayNode filteredApps = mapper.createArrayNode();
 			
 			if (appList.isArray()) {
 				for (JsonNode app : appList) {
 					ObjectNode appEntry = mapper.createObjectNode();
-					appEntry.put("name", app.path("_name").asText());
-					appEntry.put("version", app.path("version").asText());
-					appEntry.put("path", app.path("path").asText());
+					appEntry.put("name", app.path(System.getProperty("os.name").toLowerCase().contains("win") ? "Name" : "_name").asText());
+					String version = app.path(System.getProperty("os.name").toLowerCase().contains("win") ? "Version" : "version").asText();
+					appEntry.put("version", version.isBlank() ? "unknown" : version);
+					appEntry.put("path", app.path(System.getProperty("os.name").toLowerCase().contains("win") ? "AppID" : "path").asText());
 					filteredApps.add(appEntry);
 				}
 			}

@@ -2,12 +2,14 @@ const { app, BrowserWindow, ipcMain } = require("electron");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
+const { createDatabase } = require("./mongodb.cjs");
 
 const frontendRoot = path.resolve(__dirname, "..");
 const developmentJar = path.join(frontendRoot, "backend", "OnionManager.jar");
 
 let mainWindow;
 let onionManagerProcess;
+const database = createDatabase();
 
 function resolveJarPath() {
   const packagedJar = path.join(process.resourcesPath, "OnionManager.jar");
@@ -139,6 +141,7 @@ app.whenReady().then(() => {
   ipcMain.handle("onion-manager:read-snapshot", readSnapshot);
   ipcMain.handle("onion-manager:get-collection-settings", () => scheduler.getSettings());
   ipcMain.handle("onion-manager:save-collection-settings", (_event, settings) => scheduler.saveSettings(settings));
+  ipcMain.handle("onion-manager:scan-vulnerabilities", (_event, config) => database.scan(config));
   scheduler.initialize().catch((error) => console.error("Scheduler initialization failed:", error));
   createWindow();
   app.on("activate", () => {
@@ -156,3 +159,4 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", stopCollection);
+app.on("will-quit", () => database.close().catch((error) => console.error("MongoDB close failed:", error)));
