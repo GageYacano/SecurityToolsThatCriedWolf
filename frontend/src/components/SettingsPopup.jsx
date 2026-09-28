@@ -10,6 +10,14 @@ import { useNotifications } from "../notifications/NotificationProvider";
 
 const INTERVALS = [[1, "1 minute"], [15, "15 minutes"], [30, "30 minutes"], [60, "1 hour"], [360, "6 hours"], [1440, "24 hours"]];
 const DEFAULTS = { automaticCollection: false, collectionIntervalMinutes: 60 };
+const SCHEDULES = {
+  1: "Every minute, on the minute (local time).",
+  15: "At :00, :15, :30, and :45 each hour (local time).",
+  30: "At :00 and :30 each hour (local time).",
+  60: "On the hour, every hour (local time).",
+  360: "At 00:00, 06:00, 12:00, and 18:00 (local time).",
+  1440: "At 00:00 daily (local time).",
+};
 
 export default function SettingsPopup() {
   const { reportHealth, reportWarning } = useNotifications();
@@ -88,13 +96,14 @@ export default function SettingsPopup() {
               <Switch checked={settings.automaticCollection} disabled={busy || !state?.supported}
                 onChange={(_event, checked) => setSettings((current) => ({ ...current, automaticCollection: checked }))} />
             } />
-            <Tooltip arrow describeChild title="Automatic collection continues after quitting OnionManager while you are logged in. Enabling it collects immediately. Missed collections during sleep are not replayed.">
+            <Tooltip arrow describeChild title="Automatic collection continues after quitting OnionManager while you are logged in. Enabling it collects immediately. Collections follow fixed local clock times. Missed collections during sleep are combined into one attempt after waking.">
               <IconButton size="small" aria-label="About automatic collection" sx={{ color: "text.secondary" }}>
                 <HelpOutlineIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>
           <TextField select label="Collection interval" fullWidth margin="normal" size="small"
+            helperText={SCHEDULES[settings.collectionIntervalMinutes]}
             value={settings.collectionIntervalMinutes} disabled={busy || !state?.supported || !settings.automaticCollection}
             onChange={(event) => setSettings((current) => ({ ...current, collectionIntervalMinutes: Number(event.target.value) }))}>
             {INTERVALS.map(([value, label]) => <MenuItem key={value} value={value}>{label}</MenuItem>)}

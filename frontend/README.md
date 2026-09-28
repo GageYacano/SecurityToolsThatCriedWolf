@@ -158,13 +158,31 @@ changes; Save applies them immediately while leaving the dialog open to show
 registration status or an error.
 
 Enabling registers a per-user macOS LaunchAgent and requests an immediate run.
-Later runs use the selected interval. Changing the interval does not request an
-immediate run. Registration does not mean the first collection has finished:
+Later runs follow fixed local clock times using `StartCalendarInterval`:
+
+| Setting | Local schedule |
+| --- | --- |
+| 1 minute | Every minute, on the minute |
+| 15 minutes | At :00, :15, :30, and :45 each hour |
+| 30 minutes | At :00 and :30 each hour |
+| 1 hour | At :00 each hour |
+| 6 hours | At 00:00, 06:00, 12:00, and 18:00 |
+| 24 hours | At 00:00 daily |
+
+Changing the interval waits for the next matching clock time; it does not request
+an immediate run. Registration does not mean the first collection has finished:
 check the snapshot's **Last collected** timestamp. The visible window checks
 for saved changes every 30 seconds, as well as on startup and focus.
 
 The job continues after Electron quits while you remain logged in. It does not
-wake the Mac or replay missed intervals. Disabling unloads the job and removes
+wake the Mac. When scheduled times are missed during sleep, macOS combines them
+into one catch-up attempt after waking, even with the app closed. This is based
+on missed clock times, not the age of the latest snapshot. Exact execution time
+is not guaranteed. Runs missed while powered off or logged out are not caught up.
+A wake-triggered attempt uses the existing notification flow; it is not labeled
+separately because the collector does not identify its trigger.
+
+Disabling unloads the job and removes
 its plist. Disabling or changing intervals may stop a current scheduled run;
 the existing atomic snapshot write protects saved data. Manual and scheduled
 runs share the backend file lock, so a busy scheduled attempt is skipped.
@@ -194,6 +212,12 @@ check macOS System Settings, Login Items & Extensions, and retry Save. Settings
 can be saved even if registration fails, so always check the displayed status.
 Malformed settings produce an error; an explicit Save replaces them.
 
+Opening the updated app or saving settings replaces an old `StartInterval`
+registration with the calendar schedule. Existing interval and theme preferences
+are preserved; migration itself does not request an immediate collection. This
+applies separately to development and installed jobs. Install the updated build
+and open it to migrate the installed job; building alone does not change it.
+
 Disable automatic collection before deleting the app. If it has already been
 removed, unload its orphaned job and remove its plist manually:
 
@@ -214,6 +238,10 @@ by `npm run build` or `npm run dist`.
 - Verify disabled defaults and settings persistence; Cancel should not apply edits.
 - Enable and verify an immediate snapshot update, then quit and wait for another.
 - Change the interval and check that no extra immediate run starts.
+- With a one-minute schedule, quit the app and sleep across several minute
+  boundaries. Wake and verify one catch-up attempt, then normal minute-boundary
+  runs. Repeat with the app open and with a manual collection holding the lock;
+  a busy attempt should be skipped without a queued retry.
 - Disable during collection and verify the job is removed and the snapshot remains valid.
 - Overlap a manual collection with the scheduled job and confirm only one proceeds.
 - Leave the window visible and confirm new snapshots appear without switching windows.

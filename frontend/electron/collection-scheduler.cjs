@@ -92,13 +92,21 @@ module.exports = function createScheduler({ app, snapshotPath, resolveJarPath })
 
   function plist(java, jar, settings) {
     const args = [java, "-jar", jar, "--output", snapshotPath()];
+    const minutes = settings.collectionIntervalMinutes;
+    // Calendar triggers coalesce missed sleep-time runs into one attempt on wake.
+    const calendar = minutes < 60
+      ? Array.from({ length: 60 / minutes }, (_, index) => ({ Minute: index * minutes }))
+      : minutes === 60 ? [{ Minute: 0 }]
+      : Array.from({ length: 1440 / minutes }, (_, index) => ({ Hour: index * minutes / 60, Minute: 0 }));
+    const calendarXml = calendar.map((entry) => `<dict>${Object.entries(entry)
+      .map(([key, value]) => `<key>${key}</key><integer>${value}</integer>`).join("")}</dict>`).join("");
     return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>Label</key><string>${xml(label)}</string>
 <key>ProgramArguments</key><array>${args.map((arg) => `<string>${xml(arg)}</string>`).join("")}</array>
 <key>WorkingDirectory</key><string>${xml(path.dirname(snapshotPath()))}</string>
-<key>StartInterval</key><integer>${settings.collectionIntervalMinutes * 60}</integer>
+<key>StartCalendarInterval</key><array>${calendarXml}</array>
 <key>AssociatedBundleIdentifiers</key><array><string>com.seniordesign.onionmanager</string></array>
 <key>StandardOutPath</key><string>/dev/null</string>
 <key>StandardErrorPath</key><string>${xml(path.join(dataDirectory(), "collection-scheduler.log"))}</string>
