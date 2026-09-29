@@ -11,6 +11,8 @@ export default function OnionS() {
   const [snapshot, setSnapshot] = useState(null);
   const [status, setStatus] = useState("Loading saved configuration...");
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const exportingRef = useRef(false);
   const requestRef = useRef(0);
   const collectingRef = useRef(false);
   const savedTimestampRef = useRef(null);
@@ -58,7 +60,7 @@ export default function OnionS() {
   }, [addNotification]);
 
   async function runOnionManager() {
-    if (collectingRef.current) return;
+    if (collectingRef.current || exportingRef.current) return;
     collectingRef.current = true;
     const request = ++requestRef.current;
     setStatus("Collecting system configuration...");
@@ -87,6 +89,26 @@ export default function OnionS() {
     }
   }
 
+  async function exportJson() {
+    if (!snapshot || collectingRef.current || exportingRef.current) return;
+    exportingRef.current = true;
+    setIsExporting(true);
+    try {
+      const result = await window.onionManager.exportSnapshot();
+      if (result.status === "success") {
+        addNotification({ key: crypto.randomUUID(), category: "export", severity: "general",
+          message: `System specifications exported to ${result.filePath}`, timestamp: new Date().toISOString() });
+      } else if (result.status !== "cancelled") {
+        reportWarning("export", result.message || "Unable to export system specifications.");
+      }
+    } catch (error) {
+      reportWarning("export", `Unable to export system specifications: ${error.message}`);
+    } finally {
+      exportingRef.current = false;
+      setIsExporting(false);
+    }
+  }
+
   return (
     <section className="section-block" aria-labelledby="inventory-heading">
       <Box className="section-card">
@@ -104,8 +126,11 @@ export default function OnionS() {
           )}
         </Box>
         <LayerAccordionTable data={snapshot?.config} emptyMessage="No system configuration loaded." />
-        <Stack direction="row" justifyContent="flex-end" className="action-row">
-          <ActionButton isLoading={isLoading} onClick={runOnionManager}>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="flex-end" className="action-row">
+          <ActionButton isLoading={isExporting} disabled={!snapshot || isLoading} onClick={exportJson}>
+            Export JSON
+          </ActionButton>
+          <ActionButton isLoading={isLoading} disabled={isExporting} onClick={runOnionManager}>
             Get OnionS
           </ActionButton>
         </Stack>

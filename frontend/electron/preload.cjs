@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("onionManager", {
   getCollectionSettings: () => ipcRenderer.invoke("onion-manager:get-collection-settings"),
   saveCollectionSettings: (settings) => ipcRenderer.invoke("onion-manager:save-collection-settings", settings),
   readSnapshot: () => ipcRenderer.invoke("onion-manager:read-snapshot"),
+  exportSnapshot: () => ipcRenderer.invoke("onion-manager:export-snapshot"),
   run: () => ipcRenderer.invoke("onion-manager:run"),
   onOutput: (callback) => {
     const listener = (_event, message) => callback(message);

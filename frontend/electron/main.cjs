@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain } = require("electron");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -131,12 +131,22 @@ function stopCollection() {
 }
 
 const scheduler = require("./collection-scheduler.cjs")({ app, snapshotPath, resolveJarPath });
+const exportSnapshot = require("./export-snapshot.cjs")({
+  readSnapshot,
+  snapshotPath,
+  downloadsPath: () => app.getPath("downloads"),
+  showSaveDialog: (options) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return Promise.resolve({ canceled: true });
+    return dialog.showSaveDialog(mainWindow, options);
+  },
+});
 
 app.whenReady().then(() => {
   ipcMain.handle("onion-manager:get-theme", () => scheduler.getTheme());
   ipcMain.handle("onion-manager:save-theme", (_event, darkMode) => scheduler.saveTheme(darkMode));
   ipcMain.handle("onion-manager:run", runOnionManager);
   ipcMain.handle("onion-manager:read-snapshot", readSnapshot);
+  ipcMain.handle("onion-manager:export-snapshot", () => exportSnapshot());
   ipcMain.handle("onion-manager:get-collection-settings", () => scheduler.getSettings());
   ipcMain.handle("onion-manager:save-collection-settings", (_event, settings) => scheduler.saveSettings(settings));
   scheduler.initialize().catch((error) => console.error("Scheduler initialization failed:", error));

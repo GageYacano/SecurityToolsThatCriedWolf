@@ -64,6 +64,15 @@ MAVEN_BIN="$(command -v mvn)" npm run dist
 
 ## Saved configuration
 
+**Export JSON**, beside **Get OnionS**, saves the latest collected system specs
+through a native Save dialog. It defaults to Downloads with a filename based on
+the snapshot's collection time. Export does not run another collection: it captures
+the saved snapshot before opening the dialog and includes its schema version,
+timestamp, all layers, and any layer errors. Preferences and notification history
+are not included. Export is disabled until a snapshot is loaded and while a manual
+collection is running. Cancellation is silent; success or failure appears in the
+notification history. The app prevents overwriting its live snapshot file.
+
 **Get OnionS** collects once, saves the snapshot, and displays it when the Java
 process finishes. Existing results stay visible during collection. The app loads
 the latest snapshot on startup and when its window regains focus, and displays
