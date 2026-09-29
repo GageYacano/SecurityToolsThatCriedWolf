@@ -1,12 +1,9 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 
-export function formatLabel(key) {
-  return key
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
+import { formatLabel, isNameVersionTable } from "../search/filter.mjs";
+import { nameVersionRowKeys } from "../search/rowKeys.mjs";
+export { formatLabel } from "../search/filter.mjs";
 
 export function renderValue(value) {
   if (value === null || value === undefined) {
@@ -22,11 +19,10 @@ export function renderValue(value) {
       return <span className="json-empty">[]</span>;
     }
 
-    const isLibraryTable = value.every(
-      (item) => item && typeof item === "object" && "name" in item && "version" in item,
-    );
+    const isLibraryTable = isNameVersionTable(value);
 
     if (isLibraryTable) {
+      const rowKeys = nameVersionRowKeys(value);
       return (
         <Box className="library-table-wrap">
           <Box className="library-table-header">
@@ -35,7 +31,7 @@ export function renderValue(value) {
           </Box>
           {value.map((item, index) => (
             <Box
-              key={`${item.name ?? index}-${item.version ?? "unknown"}`}
+              key={rowKeys[index]}
               className="library-table-row"
             >
               <Typography className="library-table-name">{item.name ?? ""}</Typography>

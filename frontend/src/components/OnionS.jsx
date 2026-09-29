@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Box, Stack, Typography } from "@mui/material";
 import ActionButton from "./ActionButton";
 import LayerAccordionTable from "./LayerAccordionTable";
+import TableSearch from "./TableSearch";
 
 import { useNotifications } from "../notifications/NotificationProvider";
 import { collectionNotification } from "../notifications/history.mjs";
@@ -9,6 +10,7 @@ import { collectionNotification } from "../notifications/history.mjs";
 export default function OnionS() {
   const { addNotification, reportWarning } = useNotifications();
   const [snapshot, setSnapshot] = useState(null);
+  const [query, setQuery] = useState("");
   const [status, setStatus] = useState("Loading saved configuration...");
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -125,7 +127,8 @@ export default function OnionS() {
             </Typography>
           )}
         </Box>
-        <LayerAccordionTable data={snapshot?.config} emptyMessage="No system configuration loaded." />
+        <TableSearch label="Search system specs" value={query} onChange={setQuery} />
+        <LayerAccordionTable data={snapshot?.config} query={query} emptyMessage="No system configuration loaded." />
         <Stack direction={{ xs: "column", sm: "row" }} spacing={1} justifyContent="flex-end" className="action-row">
           <ActionButton isLoading={isExporting} disabled={!snapshot || isLoading} onClick={exportJson}>
             Export JSON

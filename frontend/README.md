@@ -258,3 +258,30 @@ by `npm run build` or `npm run dist`.
   registration failures, and a job disabled through macOS.
 - Verify development and installed jobs separately, and disable development
   scheduling after testing. Verify the installed build, not just development.
+
+## Keyword search and development vulnerability data
+
+Run `npm run test:table-ui` to build and launch an isolated Electron regression
+for duplicate application/library rows, repeated searches, and snapshot refreshes.
+It uses a temporary profile and simulated data, without registering background jobs.
+
+OnionS and Vulnerabilities each have an independent keyword search. Searches are
+case-insensitive, ignore surrounding whitespace, and filter displayed fields
+within the five existing layers. Matching records keep their full details;
+collection errors remain visible. Clear restores all data and the layer expansion
+state from before searching. Searches are session-only and never change snapshots
+or JSON exports.
+
+`npm run dev` loads 15 explicitly fictional vulnerability examples (three per
+layer) and labels them as development demo data. Try `memory`, `Demo Browser`,
+`2026-01`, or `2.0 through 2.3`. The scan button is disabled in this mode because
+no real vulnerability scanner is connected. Production builds exclude the fixture
+and retain the unavailable-scanner state. Mock findings are never saved, exported,
+or added to notifications.
+
+Future database results should use `layer_affected` (hardware, firmware, os,
+libraries, or applications), `date_reported` (an ISO date string), `name`,
+`versions` (a string or array of strings), and `description`. Results are grouped
+by layer and all five fields are searchable. The layer appears in the accordion
+header; the other fields appear on each finding. No CVE ID or severity field is
+required by this interface.
